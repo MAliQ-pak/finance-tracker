@@ -34,7 +34,7 @@ export default function BottomNav() {
   const navigate = useNavigate()
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] flex items-end justify-around px-2 pt-2 pb-3 border-t border-slate-800 bg-slate-950 z-50">
+    <nav className="flex items-end justify-around px-2 pt-2 pb-3 border-t border-slate-800 bg-slate-950 shrink-0">
       <NavItem to="/" icon={Home} label="Home" end />
 
       {/* Add — visually prominent raised button */}
