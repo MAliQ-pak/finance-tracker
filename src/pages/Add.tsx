@@ -31,15 +31,15 @@ export default function Add() {
   const [date, setDate] = useState(today)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(getLastPaymentMethod)
   const [note, setNote] = useState('')
-  const [expenseType, setExpenseType] = useState<ExpenseType | ''>('')
+  const [expenseType, setExpenseType] = useState<ExpenseType | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
   const parsedAmount = parseFloat(amount)
-  const canSave = category !== '' && expenseType !== '' && !isNaN(parsedAmount) && parsedAmount > 0
+  const canSave = category !== '' && expenseType !== null && !isNaN(parsedAmount) && parsedAmount > 0
 
   const handleSave = async () => {
-    if (!canSave || saving || expenseType === '') return
+    if (!canSave || saving || expenseType === null) return
     setSaving(true)
     try {
       await addExpense({
@@ -58,7 +58,7 @@ export default function Add() {
       setNote('')
       setPaymentMethod(getLastPaymentMethod())
       setDate(today)
-      setExpenseType('')
+      setExpenseType(null)
       setTimeout(() => {
         navigate('/')
         setSaved(false)

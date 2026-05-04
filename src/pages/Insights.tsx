@@ -241,7 +241,8 @@ export default function Insights() {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => [formatCurrency(value), '']}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      formatter={(value: any) => [typeof value === 'number' ? formatCurrency(value) : '₨ 0', '']}
                       contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }}
                       itemStyle={{ color: '#cbd5e1' }}
                       labelStyle={{ color: '#94a3b8' }}
@@ -297,7 +298,8 @@ export default function Insights() {
                     <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
                     <YAxis hide />
                     <Tooltip
-                      formatter={(v: number) => [formatCurrency(v), 'Spent']}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      formatter={(v: any) => [typeof v === 'number' ? formatCurrency(v) : '₨ 0', 'Spent']}
                       contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }}
                       itemStyle={{ color: '#cbd5e1' }}
                       labelStyle={{ color: '#94a3b8' }}
