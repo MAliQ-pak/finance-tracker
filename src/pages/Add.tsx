@@ -11,6 +11,7 @@ import {
   type PaymentMethod,
 } from '@/lib/categories'
 import { addExpense } from '@/db/expenses'
+import { getLastPaymentMethod, setLastPaymentMethod } from '@/lib/preferences'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 
@@ -21,7 +22,7 @@ export default function Add() {
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState<Category | ''>('')
   const [date, setDate] = useState(today)
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Card')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(getLastPaymentMethod)
   const [note, setNote] = useState('')
   const [isEssential, setIsEssential] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -42,12 +43,13 @@ export default function Add() {
         date,
         isEssential,
       })
+      setLastPaymentMethod(paymentMethod)
       setSaved(true)
       setSaving(false)
       setAmount('')
       setCategory('')
       setNote('')
-      setPaymentMethod('Card')
+      setPaymentMethod(getLastPaymentMethod())
       setDate(today)
       setIsEssential(false)
       setTimeout(() => {
