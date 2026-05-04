@@ -7,6 +7,8 @@ import {
   HeartPulse,
   ShoppingCart,
   MoreHorizontal,
+  PiggyBank,
+  Heart,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -18,6 +20,8 @@ export const CATEGORIES = [
   'Entertainment',
   'Health',
   'Groceries',
+  'Committee',
+  'Family',
   'Other',
 ] as const
 
@@ -36,6 +40,8 @@ export const CATEGORY_ICONS: Record<Category, LucideIcon> = {
   Entertainment: Film,
   Health: HeartPulse,
   Groceries: ShoppingCart,
+  Committee: PiggyBank,
+  Family: Heart,
   Other: MoreHorizontal,
 }
 
@@ -47,6 +53,8 @@ export const CATEGORY_COLORS: Record<Category, string> = {
   Entertainment: '#ec4899',
   Health: '#22c55e',
   Groceries: '#14b8a6',
+  Committee: '#06b6d4',
+  Family: '#f43f5e',
   Other: '#6b7280',
 }
 

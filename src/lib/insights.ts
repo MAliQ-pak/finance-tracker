@@ -20,46 +20,60 @@ export function generateInsights(
   const cards: InsightCard[] = []
 
   let needs = 0, wants = 0, savings = 0
+  const catMap: Record<string, number> = {}
   for (const e of expenses) {
     if (e.type === 'need') needs += e.amount
     else if (e.type === 'want') wants += e.amount
     else savings += e.amount
+    catMap[e.category] = (catMap[e.category] ?? 0) + e.amount
   }
   const total = needs + wants + savings
 
-  // Needs overspend
-  if (income > 0 && targets.needs > 0) {
-    const paced = targets.needs * pace
-    if (needs > targets.needs) {
-      cards.push({
-        id: 'needs-over',
-        icon: '🚨',
-        title: 'Needs over budget',
-        body: `You've spent ₨ ${needs.toLocaleString('en-US')} on needs — ₨ ${(needs - targets.needs).toLocaleString('en-US')} over your ${Math.round((targets.needs / income) * 100)}% target.`,
-        severity: 'warn',
-      })
-    } else if (needs > paced * 1.2) {
+  // Day of month derived from pace (pace = currentDay / daysInMonth, so currentDay ≈ pace * 31)
+  // We use pace > 0.5 as "past halfway" and pace > (15/31) as "past day 15"
+  const pastDay15 = pace > 15 / 31
+
+  // Needs hard overspend (always show regardless of day)
+  if (income > 0 && targets.needs > 0 && needs > targets.needs) {
+    cards.push({
+      id: 'needs-over',
+      icon: '🚨',
+      title: 'Needs over budget',
+      body: `You've spent ₨ ${needs.toLocaleString('en-US')} on needs — ₨ ${(needs - targets.needs).toLocaleString('en-US')} over your ${Math.round((targets.needs / income) * 100)}% target.`,
+      severity: 'warn',
+    })
+  }
+
+  // Needs pacing — only after day 15, project month-end and show projected overspend
+  if (
+    income > 0 &&
+    targets.needs > 0 &&
+    needs <= targets.needs &&   // not already over (that's handled above)
+    pastDay15 &&
+    pace > 0
+  ) {
+    const projected = needs / pace
+    if (projected > targets.needs * 1.1) {
+      const overshoot = Math.round(projected - targets.needs)
       cards.push({
         id: 'needs-pace',
         icon: '⚡',
-        title: 'Needs spending ahead of pace',
-        body: `You're ${Math.round(((needs - paced) / paced) * 100)}% ahead of where you should be this far into the month.`,
+        title: 'Needs on track to overspend',
+        body: `At this rate you'll spend ₨ ${Math.round(projected).toLocaleString('en-US')} on needs by month-end — about ₨ ${overshoot.toLocaleString('en-US')} over your target.`,
         severity: 'warn',
       })
     }
   }
 
   // Wants overspend
-  if (income > 0 && targets.wants > 0) {
-    if (wants > targets.wants) {
-      cards.push({
-        id: 'wants-over',
-        icon: '💸',
-        title: 'Wants over budget',
-        body: `Discretionary spending hit ₨ ${wants.toLocaleString('en-US')} vs your ₨ ${targets.wants.toLocaleString('en-US')} target. Consider cutting back.`,
-        severity: 'warn',
-      })
-    }
+  if (income > 0 && targets.wants > 0 && wants > targets.wants) {
+    cards.push({
+      id: 'wants-over',
+      icon: '💸',
+      title: 'Wants over budget',
+      body: `Discretionary spending hit ₨ ${wants.toLocaleString('en-US')} vs your ₨ ${targets.wants.toLocaleString('en-US')} target. Consider cutting back.`,
+      severity: 'warn',
+    })
   }
 
   // Savings on track
@@ -73,7 +87,7 @@ export function generateInsights(
     })
   }
 
-  // No savings recorded
+  // No savings recorded past halfway
   if (income > 0 && savings === 0 && pace > 0.5) {
     cards.push({
       id: 'no-savings',
@@ -84,11 +98,23 @@ export function generateInsights(
     })
   }
 
-  // Top spending category
-  const catMap: Record<string, number> = {}
-  for (const e of expenses) catMap[e.category] = (catMap[e.category] ?? 0) + e.amount
+  // High "Other" category usage
+  if (total > 0 && catMap['Other']) {
+    const otherPct = Math.round((catMap['Other'] / total) * 100)
+    if (otherPct >= 30) {
+      cards.push({
+        id: 'high-other',
+        icon: '🏷️',
+        title: `${otherPct}% of spending is in 'Other'`,
+        body: `Consider using more specific categories — Committee, Family, or others — for clearer tracking.`,
+        severity: 'info',
+      })
+    }
+  }
+
+  // Top spending category (only if it's not Other and dominates)
   const topCat = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0]
-  if (topCat && total > 0) {
+  if (topCat && topCat[0] !== 'Other' && total > 0) {
     const pct = Math.round((topCat[1] / total) * 100)
     if (pct >= 40) {
       cards.push({
