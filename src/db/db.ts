@@ -2,7 +2,7 @@ import Dexie, { type EntityTable } from 'dexie'
 
 export type ExpenseType = 'need' | 'want' | 'savings'
 
-interface Expense {
+export interface Expense {
   id: number
   amount: number
   category: string
@@ -10,11 +10,34 @@ interface Expense {
   paymentMethod: string
   date: string
   type: ExpenseType
+  goalId: number | null
   createdAt: string
+}
+
+export interface CategoryRecord {
+  id: number
+  label: string      // unique — also used as expense.category value
+  icon: string       // lucide component name e.g. 'UtensilsCrossed'
+  color: string      // hex
+  order: number
+  isCustom: boolean
+}
+
+export interface Goal {
+  id: number
+  name: string
+  targetAmount: number
+  targetDate: string | null   // YYYY-MM-DD or null
+  icon: string                // lucide name
+  color: string
+  createdAt: string
+  completedAt: string | null
 }
 
 const db = new Dexie('FinanceTrackerDB') as Dexie & {
   expenses: EntityTable<Expense, 'id'>
+  categories: EntityTable<CategoryRecord, 'id'>
+  goals: EntityTable<Goal, 'id'>
 }
 
 db.version(1).stores({
@@ -38,5 +61,14 @@ db.version(3).stores({
   })
 )
 
-export type { Expense }
+db.version(4).stores({
+  expenses: '++id, amount, category, paymentMethod, date, type, goalId, createdAt',
+  categories: '++id, &label, order',
+  goals: '++id',
+}).upgrade(tx =>
+  tx.table('expenses').toCollection().modify((e: Record<string, unknown>) => {
+    if (e.goalId === undefined) e.goalId = null
+  })
+)
+
 export { db }

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Home, Plus, BarChart3, Settings } from 'lucide-react'
+import { Home, Plus, BarChart3, Target } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 function NavItem({
@@ -50,7 +50,7 @@ export default function BottomNav() {
       </div>
 
       <NavItem to="/insights" icon={BarChart3} label="Insights" />
-      <NavItem to="/settings" icon={Settings} label="Settings" />
+      <NavItem to="/goals" icon={Target} label="Goals" />
     </nav>
   )
 }

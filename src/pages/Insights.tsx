@@ -1,26 +1,21 @@
 import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Sparkles, RotateCcw } from 'lucide-react'
 import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  Tooltip,
+  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
+  ResponsiveContainer, Tooltip,
 } from 'recharts'
 import { getExpensesForMonth } from '@/db/expenses'
 import { getMonthlyIncome, getBudgetSplits } from '@/lib/preferences'
 import { calculateTargets, monthPace } from '@/lib/budget'
 import { generateInsights } from '@/lib/insights'
-import { CATEGORY_COLORS, formatCurrency } from '@/lib/categories'
+import { formatCurrency } from '@/lib/categories'
+import { generateMonthlyReviewPrompt } from '@/lib/aiPrompt'
+import { detectRecurringExpenses, addIgnoredKey } from '@/lib/recurring'
+import { db } from '@/db/db'
 import type { Expense } from '@/db/db'
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-
 const TYPE_COLORS = { need: '#3b82f6', want: '#a855f7', savings: '#10b981' }
 
 function pct(value: number, total: number) {
@@ -29,17 +24,13 @@ function pct(value: number, total: number) {
 }
 
 function fmt(n: number) {
-  if (n >= 100_000) return `₨${(n / 1000).toFixed(0)}k`
-  if (n >= 1_000) return `₨${(n / 1000).toFixed(1)}k`
-  return `₨${n.toFixed(0)}`
+  if (n >= 100_000) return `Rs${(n / 1000).toFixed(0)}k`
+  if (n >= 1_000) return `Rs${(n / 1000).toFixed(1)}k`
+  return `Rs${n.toFixed(0)}`
 }
 
 interface ProgressBarProps {
-  label: string
-  spent: number
-  target: number
-  color: string
-  pace: number
+  label: string; spent: number; target: number; color: string; pace: number
 }
 
 function BudgetBar({ label, spent, target, color, pace }: ProgressBarProps) {
@@ -57,15 +48,11 @@ function BudgetBar({ label, spent, target, color, pace }: ProgressBarProps) {
         </span>
       </div>
       <div className="relative h-2 bg-slate-800 rounded-full overflow-hidden">
-        <div
-          className="absolute left-0 top-0 h-full rounded-full transition-all"
-          style={{ width: `${spentPct}%`, backgroundColor: over ? '#ef4444' : color }}
-        />
+        <div className="absolute left-0 top-0 h-full rounded-full transition-all"
+          style={{ width: `${spentPct}%`, backgroundColor: over ? '#ef4444' : color }} />
         {target > 0 && (
-          <div
-            className="absolute top-0 w-0.5 h-full bg-slate-500 opacity-60"
-            style={{ left: `${pacePct}%` }}
-          />
+          <div className="absolute top-0 w-0.5 h-full bg-slate-500 opacity-60"
+            style={{ left: `${pacePct}%` }} />
         )}
       </div>
       <div className="flex justify-between">
@@ -82,39 +69,45 @@ export default function Insights() {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
+  const [copying, setCopying] = useState(false)
+  const [toastMsg, setToastMsg] = useState('')
+  const [ignoredKeys, setIgnoredKeys] = useState<Set<string>>(new Set())
 
   const income = getMonthlyIncome()
   const splits = getBudgetSplits()
   const targets = calculateTargets(income, splits)
   const pace = monthPace(year, month)
 
-  const expenses = useLiveQuery(
-    () => getExpensesForMonth(year, month),
-    [year, month]
-  ) ?? []
+  const expenses = useLiveQuery(() => getExpensesForMonth(year, month), [year, month]) ?? []
+  const allExpenses = useLiveQuery(() => db.expenses.toArray()) ?? []
+  const dbCategories = useLiveQuery(() => db.categories.orderBy('order').toArray()) ?? []
 
-  const { needs, wants, savings, total, categoryMap, dailyData, topExpenses, typeData } = useMemo(() => {
+  // Build color map from db categories
+  const categoryColorMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const c of dbCategories) m[c.label] = c.color
+    return m
+  }, [dbCategories])
+
+  const { needs, wants, savings, total, catChartData, dailyData, topExpenses, typeData } = useMemo(() => {
     let needs = 0, wants = 0, savings = 0
-    const categoryMap: Record<string, number> = {}
+    const catMap: Record<string, number> = {}
     const dailyMap: Record<string, number> = {}
 
     for (const e of expenses) {
       if (e.type === 'need') needs += e.amount
       else if (e.type === 'want') wants += e.amount
       else savings += e.amount
-      categoryMap[e.category] = (categoryMap[e.category] ?? 0) + e.amount
+      catMap[e.category] = (catMap[e.category] ?? 0) + e.amount
       dailyMap[e.date] = (dailyMap[e.date] ?? 0) + e.amount
     }
 
     const total = needs + wants + savings
-
     const dailyData = Object.entries(dailyMap)
       .map(([date, amount]) => ({ date: date.slice(8), amount }))
       .sort((a, b) => a.date.localeCompare(b.date))
 
-    const topExpenses = [...expenses]
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 5)
+    const topExpenses = [...expenses].sort((a, b) => b.amount - a.amount).slice(0, 5)
 
     const typeData = [
       { name: 'Needs', value: needs, color: TYPE_COLORS.need },
@@ -122,20 +115,46 @@ export default function Insights() {
       { name: 'Savings', value: savings, color: TYPE_COLORS.savings },
     ].filter(d => d.value > 0)
 
-    return { needs, wants, savings, total, categoryMap, dailyData, topExpenses, typeData }
-  }, [expenses])
+    const catChartData = Object.entries(catMap)
+      .map(([name, value]) => ({ name, value, color: categoryColorMap[name] ?? '#6b7280' }))
+      .sort((a, b) => b.value - a.value)
+
+    return { needs, wants, savings, total, catChartData, dailyData, topExpenses, typeData }
+  }, [expenses, categoryColorMap])
 
   const insights = useMemo(
     () => generateInsights(expenses, targets, income, pace),
     [expenses, targets, income, pace]
   )
 
-  const catChartData = useMemo(() =>
-    Object.entries(categoryMap)
-      .map(([name, value]) => ({ name, value, color: CATEGORY_COLORS[name as keyof typeof CATEGORY_COLORS] ?? '#6b7280' }))
-      .sort((a, b) => b.value - a.value),
-    [categoryMap]
-  )
+  const recurring = useMemo(() => detectRecurringExpenses(allExpenses), [allExpenses, ignoredKeys])
+
+  const subscriptions = recurring.filter(r => r.isSubscription)
+  const subscriptionTotal = subscriptions.reduce((s, r) => s + r.averageAmount, 0)
+
+  function showToast(msg: string) {
+    setToastMsg(msg)
+    setTimeout(() => setToastMsg(''), 3500)
+  }
+
+  async function handleAIReview() {
+    setCopying(true)
+    try {
+      const prompt = await generateMonthlyReviewPrompt(year, month)
+      await navigator.clipboard.writeText(prompt)
+      localStorage.setItem('lastAIReview', new Date().toISOString())
+      showToast('Copied! Paste into Claude.ai for your personalized review.')
+    } catch {
+      showToast('Could not copy — try again.')
+    } finally {
+      setCopying(false)
+    }
+  }
+
+  function handleIgnoreRecurring(key: string) {
+    addIgnoredKey(key)
+    setIgnoredKeys(prev => new Set([...prev, key]))
+  }
 
   function prevMonth() {
     if (month === 1) { setMonth(12); setYear(y => y - 1) }
@@ -162,11 +181,7 @@ export default function Insights() {
           <p className="text-base font-semibold text-slate-100">{MONTH_NAMES[month - 1]} {year}</p>
           <p className="text-xs text-slate-500">{formatCurrency(total)} total</p>
         </div>
-        <button
-          onClick={nextMonth}
-          disabled={isCurrentMonth}
-          className="p-1 text-slate-400 active:text-slate-200 disabled:opacity-30"
-        >
+        <button onClick={nextMonth} disabled={isCurrentMonth} className="p-1 text-slate-400 active:text-slate-200 disabled:opacity-30">
           <ChevronRight size={20} />
         </button>
       </div>
@@ -193,20 +208,30 @@ export default function Insights() {
             </div>
           </section>
 
-          {/* Smart insights */}
-          {insights.length > 0 && (
-            <section>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Insights</p>
+          {/* Smart insights + AI button */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Insights</p>
+            </div>
+            {/* AI Review button */}
+            <button
+              onClick={handleAIReview}
+              disabled={copying}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-400 font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-50 mb-3"
+            >
+              <Sparkles size={15} />
+              {copying ? 'Copying…' : '🪄 Get AI Coach Review'}
+            </button>
+
+            {insights.length > 0 && (
               <div className="flex flex-col gap-2">
                 {insights.map(card => (
                   <div
                     key={card.id}
                     className={`flex gap-3 p-3.5 rounded-xl border ${
-                      card.severity === 'good'
-                        ? 'bg-emerald-500/5 border-emerald-500/20'
-                        : card.severity === 'warn'
-                        ? 'bg-amber-500/5 border-amber-500/20'
-                        : 'bg-slate-900 border-slate-800'
+                      card.severity === 'good' ? 'bg-emerald-500/5 border-emerald-500/20'
+                      : card.severity === 'warn' ? 'bg-amber-500/5 border-amber-500/20'
+                      : 'bg-slate-900 border-slate-800'
                     }`}
                   >
                     <span className="text-lg shrink-0">{card.icon}</span>
@@ -217,8 +242,8 @@ export default function Insights() {
                   </div>
                 ))}
               </div>
-            </section>
-          )}
+            )}
+          </section>
 
           {/* Category donut */}
           {catChartData.length > 0 && (
@@ -227,21 +252,10 @@ export default function Insights() {
               <div className="bg-slate-900 rounded-2xl p-4">
                 <ResponsiveContainer width="100%" height={180}>
                   <PieChart>
-                    <Pie
-                      data={catChartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {catChartData.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
+                    <Pie data={catChartData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value">
+                      {catChartData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
                     <Tooltip
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       formatter={(value: any) => [typeof value === 'number' ? formatCurrency(value) : '₨ 0', '']}
                       contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }}
                       itemStyle={{ color: '#cbd5e1' }}
@@ -262,17 +276,14 @@ export default function Insights() {
             </section>
           )}
 
-          {/* Type split bar */}
+          {/* Type split */}
           {typeData.length > 0 && (
             <section>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Needs / Wants / Savings</p>
               <div className="bg-slate-900 rounded-2xl p-4 flex flex-col gap-3">
                 <div className="flex h-3 rounded-full overflow-hidden gap-0.5">
                   {typeData.map(({ name, value, color }) => (
-                    <div
-                      key={name}
-                      style={{ width: `${pct(value, total)}%`, backgroundColor: color }}
-                    />
+                    <div key={name} style={{ width: `${pct(value, total)}%`, backgroundColor: color }} />
                   ))}
                 </div>
                 <div className="flex gap-4">
@@ -288,6 +299,49 @@ export default function Insights() {
             </section>
           )}
 
+          {/* Recurring expenses */}
+          {recurring.length > 0 && (
+            <section>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Recurring Expenses</p>
+              <div className="flex flex-col gap-2">
+                {subscriptions.length > 0 && (
+                  <div className="flex items-center justify-between bg-slate-900 rounded-xl px-4 py-3 border border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">🔁</span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-200">
+                          Subscriptions: {formatCurrency(subscriptionTotal)}/mo
+                        </p>
+                        <p className="text-xs text-slate-500">{subscriptions.length} service{subscriptions.length !== 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {recurring.slice(0, 6).map(item => (
+                  <div key={item.key} className="flex items-center gap-3 bg-slate-900 rounded-xl px-4 py-3">
+                    <span className="text-sm shrink-0">{item.isSubscription ? '🔁' : '📅'}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-200 truncate">{item.note}</p>
+                      <p className="text-xs text-slate-500">
+                        {item.category} · {item.frequency} · {item.monthsSeen} months · {formatCurrency(item.totalSpent)} total
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span className="text-sm font-semibold text-slate-200">{formatCurrency(item.averageAmount)}</span>
+                      <button
+                        onClick={() => handleIgnoreRecurring(item.key)}
+                        className="text-slate-600 hover:text-slate-400"
+                        title="Not recurring"
+                      >
+                        <RotateCcw size={11} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Daily trend */}
           {dailyData.length > 1 && (
             <section>
@@ -298,8 +352,7 @@ export default function Insights() {
                     <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
                     <YAxis hide />
                     <Tooltip
-                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                      formatter={(v: any) => [typeof v === 'number' ? formatCurrency(v) : '₨ 0', 'Spent']}
+                      formatter={(v: any) => [typeof v === 'number' ? formatCurrency(v) : 'Rs 0', 'Spent']}
                       contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }}
                       itemStyle={{ color: '#cbd5e1' }}
                       labelStyle={{ color: '#94a3b8' }}
@@ -317,10 +370,7 @@ export default function Insights() {
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Top Expenses</p>
               <div className="bg-slate-900 rounded-2xl overflow-hidden">
                 {topExpenses.map((e: Expense, i: number) => (
-                  <div
-                    key={e.id}
-                    className={`flex items-center gap-3 px-4 py-3 ${i < topExpenses.length - 1 ? 'border-b border-slate-800/60' : ''}`}
-                  >
+                  <div key={e.id} className={`flex items-center gap-3 px-4 py-3 ${i < topExpenses.length - 1 ? 'border-b border-slate-800/60' : ''}`}>
                     <span className="text-xs font-bold text-slate-600 w-4">#{i + 1}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-200">{e.category}</p>
@@ -336,6 +386,13 @@ export default function Insights() {
             </section>
           )}
         </>
+      )}
+
+      {/* Toast */}
+      {toastMsg && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium px-4 py-3 rounded-xl shadow-xl max-w-[320px] text-center">
+          {toastMsg}
+        </div>
       )}
     </div>
   )

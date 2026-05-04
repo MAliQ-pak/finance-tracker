@@ -1,23 +1,18 @@
 import { useEffect, useState } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { Sheet } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import {
-  CATEGORIES,
-  PRIMARY_METHODS,
-  DIGITAL_METHODS,
-  CATEGORY_ICONS,
-  CATEGORY_COLORS,
-  type Category,
-  type PaymentMethod,
-} from '@/lib/categories'
+import { PRIMARY_METHODS, DIGITAL_METHODS, type PaymentMethod } from '@/lib/categories'
 import { updateExpense, deleteExpense } from '@/db/expenses'
+import { db } from '@/db/db'
 import type { Expense, ExpenseType } from '@/db/db'
 import { Shield, Sparkles, PiggyBank } from 'lucide-react'
+import { getIcon } from '@/lib/iconMap'
 
 const TYPE_OPTIONS: { value: ExpenseType; label: string; icon: typeof Shield; color: string }[] = [
-  { value: 'need', label: 'Need', icon: Shield, color: '#3b82f6' },
-  { value: 'want', label: 'Want', icon: Sparkles, color: '#a855f7' },
+  { value: 'need',    label: 'Need',    icon: Shield,    color: '#3b82f6' },
+  { value: 'want',    label: 'Want',    icon: Sparkles,  color: '#a855f7' },
   { value: 'savings', label: 'Savings', icon: PiggyBank, color: '#10b981' },
 ]
 
@@ -30,22 +25,27 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
   const open = expense !== null
 
   const [amount, setAmount] = useState('')
-  const [category, setCategory] = useState<Category | ''>('')
+  const [category, setCategory] = useState('')
   const [date, setDate] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Card')
   const [note, setNote] = useState('')
   const [expenseType, setExpenseType] = useState<ExpenseType>('need')
+  const [goalId, setGoalId] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
+
+  const categories = useLiveQuery(() => db.categories.orderBy('order').toArray()) ?? []
+  const goals = useLiveQuery(() => db.goals.orderBy('createdAt').toArray()) ?? []
 
   useEffect(() => {
     if (expense) {
       setAmount(String(expense.amount))
-      setCategory(expense.category as Category)
+      setCategory(expense.category)
       setDate(expense.date.slice(0, 10))
       setPaymentMethod(expense.paymentMethod as PaymentMethod)
       setNote(expense.note)
       setExpenseType(expense.type)
+      setGoalId(expense.goalId ?? null)
       setDeleteConfirm(false)
     }
   }, [expense])
@@ -64,6 +64,7 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
         paymentMethod,
         date,
         type: expenseType,
+        goalId: expenseType === 'savings' ? goalId : null,
       })
       onClose()
     } catch {
@@ -91,7 +92,7 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
         {/* Amount */}
         <div className="flex flex-col items-center gap-1 py-5 bg-slate-900 rounded-2xl">
           <div className="flex items-center gap-1.5">
-            <span className="text-2xl font-light text-slate-500">₨</span>
+            <span className="text-2xl font-light text-slate-500">Rs</span>
             <input
               type="text"
               inputMode="decimal"
@@ -106,29 +107,23 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
 
         {/* Category */}
         <div className="grid grid-cols-2 gap-2">
-          {CATEGORIES.map(cat => {
-            const Icon = CATEGORY_ICONS[cat]
-            const color = CATEGORY_COLORS[cat]
-            const selected = category === cat
+          {categories.map(cat => {
+            const Icon = getIcon(cat.icon)
+            const selected = category === cat.label
             return (
               <button
-                key={cat}
-                onClick={() => setCategory(cat)}
+                key={cat.id}
+                onClick={() => setCategory(cat.label)}
                 className={cn(
                   'flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-95',
-                  selected
-                    ? 'border-emerald-500 bg-emerald-500/10'
-                    : 'border-slate-800 bg-slate-900/60'
+                  selected ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-800 bg-slate-900/60'
                 )}
               >
-                <div
-                  className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0"
-                  style={{ backgroundColor: `${color}22` }}
-                >
-                  <Icon size={15} style={{ color }} />
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0" style={{ backgroundColor: `${cat.color}22` }}>
+                  <Icon size={15} style={{ color: cat.color }} />
                 </div>
                 <span className={cn('text-sm font-medium', selected ? 'text-emerald-400' : 'text-slate-300')}>
-                  {cat}
+                  {cat.label}
                 </span>
               </button>
             )
@@ -142,29 +137,46 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
             return (
               <button
                 key={value}
-                onClick={() => setExpenseType(value)}
-                className={cn(
-                  'flex flex-col items-center gap-1.5 py-2.5 rounded-xl border transition-all active:scale-95',
-                  selected ? 'border-current' : 'border-slate-800 bg-slate-900/60'
-                )}
-                style={selected ? { borderColor: color, backgroundColor: `${color}18` } : undefined}
+                onClick={() => { setExpenseType(value); if (value !== 'savings') setGoalId(null) }}
+                className="flex flex-col items-center gap-1.5 py-2.5 rounded-xl border transition-all active:scale-95"
+                style={selected ? { borderColor: color, backgroundColor: `${color}18` } : { borderColor: '#1e293b', backgroundColor: 'rgba(15,23,42,0.6)' }}
               >
-                <div
-                  className="flex items-center justify-center w-7 h-7 rounded-lg"
-                  style={{ backgroundColor: `${color}22` }}
-                >
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg" style={{ backgroundColor: `${color}22` }}>
                   <Icon size={14} style={{ color }} />
                 </div>
-                <span
-                  className="text-xs font-semibold"
-                  style={{ color: selected ? color : '#94a3b8' }}
-                >
-                  {label}
-                </span>
+                <span className="text-xs font-semibold" style={{ color: selected ? color : '#94a3b8' }}>{label}</span>
               </button>
             )
           })}
         </div>
+
+        {/* Goal picker (savings only) */}
+        {expenseType === 'savings' && goals.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Link to Goal <span className="text-slate-600 normal-case font-normal">(optional)</span></p>
+            <div className="flex flex-col gap-1.5">
+              <button
+                onClick={() => setGoalId(null)}
+                className={cn('px-3 py-2 rounded-xl border text-xs transition-all text-left', goalId === null ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' : 'border-slate-800 text-slate-400')}
+              >
+                No specific goal
+              </button>
+              {goals.map(g => {
+                const Icon = getIcon(g.icon)
+                return (
+                  <button
+                    key={g.id}
+                    onClick={() => setGoalId(g.id)}
+                    className={cn('flex items-center gap-2 px-3 py-2 rounded-xl border text-xs transition-all', goalId === g.id ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' : 'border-slate-800 text-slate-400')}
+                  >
+                    <Icon size={12} style={{ color: g.color }} />
+                    {g.name}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Date */}
         <input
@@ -180,12 +192,7 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
             <button
               key={method}
               onClick={() => setPaymentMethod(method)}
-              className={cn(
-                'flex-1 py-2 rounded-lg text-sm font-medium transition-all',
-                paymentMethod === method
-                  ? 'bg-slate-700 text-slate-100'
-                  : 'text-slate-500 active:text-slate-300'
-              )}
+              className={cn('flex-1 py-2 rounded-lg text-sm font-medium transition-all', paymentMethod === method ? 'bg-slate-700 text-slate-100' : 'text-slate-500 active:text-slate-300')}
             >
               {method}
             </button>
@@ -196,12 +203,7 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
             <button
               key={method}
               onClick={() => setPaymentMethod(method)}
-              className={cn(
-                'py-2 rounded-xl text-xs font-medium border transition-all active:scale-95',
-                paymentMethod === method
-                  ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
-                  : 'border-slate-800 bg-slate-900/60 text-slate-400'
-              )}
+              className={cn('py-2 rounded-xl text-xs font-medium border transition-all active:scale-95', paymentMethod === method ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' : 'border-slate-800 bg-slate-900/60 text-slate-400')}
             >
               {method}
             </button>
@@ -223,9 +225,7 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
             onClick={handleDelete}
             className={cn(
               'flex-1 py-3.5 rounded-xl font-semibold text-sm transition-all active:scale-95',
-              deleteConfirm
-                ? 'bg-red-500 text-white'
-                : 'bg-slate-800 text-red-400 border border-red-400/20'
+              deleteConfirm ? 'bg-red-500 text-white' : 'bg-slate-800 text-red-400 border border-red-400/20'
             )}
           >
             {deleteConfirm ? 'Tap again to delete' : 'Delete'}

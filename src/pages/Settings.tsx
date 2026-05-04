@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { ChevronDown, ChevronUp, Download, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, Download, Trash2, Tag, BarChart2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import {
   getMonthlyIncome,
   setMonthlyIncome,
@@ -15,6 +16,7 @@ function clamp(n: number) {
 }
 
 export default function Settings() {
+  const navigate = useNavigate()
   const [income, setIncome] = useState('')
   const [splits, setSplits] = useState<BudgetSplits>({ needs: 50, wants: 30, savings: 20 })
   const [showCustom, setShowCustom] = useState(false)
@@ -85,6 +87,7 @@ export default function Settings() {
       return
     }
     await db.expenses.clear()
+    await db.goals.clear()
     setClearConfirm(false)
   }
 
@@ -104,7 +107,7 @@ export default function Settings() {
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Monthly Income</p>
         <div className="bg-slate-900 rounded-2xl p-4 flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-slate-500 text-lg font-light">₨</span>
+            <span className="text-slate-500 text-lg font-light">Rs</span>
             <input
               type="text"
               inputMode="decimal"
@@ -224,6 +227,27 @@ export default function Settings() {
         )}
       </section>
 
+      {/* Manage */}
+      <section>
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Manage</p>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => navigate('/manage-categories')}
+            className="flex items-center gap-3 px-4 py-3.5 bg-slate-900 rounded-xl text-slate-200 text-sm font-medium active:scale-[0.98] transition-all"
+          >
+            <Tag size={16} className="text-emerald-400 shrink-0" />
+            Manage Categories
+          </button>
+          <button
+            onClick={() => navigate('/stats')}
+            className="flex items-center gap-3 px-4 py-3.5 bg-slate-900 rounded-xl text-slate-200 text-sm font-medium active:scale-[0.98] transition-all"
+          >
+            <BarChart2 size={16} className="text-emerald-400 shrink-0" />
+            Lifetime Stats
+          </button>
+        </div>
+      </section>
+
       {/* Data */}
       <section>
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Data</p>
@@ -238,9 +262,7 @@ export default function Settings() {
           <button
             onClick={handleClearData}
             className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium active:scale-[0.98] transition-all ${
-              clearConfirm
-                ? 'bg-red-500 text-white'
-                : 'bg-slate-900 text-red-400'
+              clearConfirm ? 'bg-red-500 text-white' : 'bg-slate-900 text-red-400'
             }`}
           >
             <Trash2 size={16} className="shrink-0" />
@@ -265,7 +287,7 @@ export default function Settings() {
           <div className="h-px bg-slate-800" />
           <div className="flex justify-between items-center">
             <span className="text-sm text-slate-400">Currency</span>
-            <span className="text-sm text-slate-200">Pakistani Rupee (₨)</span>
+            <span className="text-sm text-slate-200">Pakistani Rupee (Rs)</span>
           </div>
           <div className="h-px bg-slate-800" />
           <p className="text-xs text-slate-600 pt-1">
