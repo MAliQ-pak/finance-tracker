@@ -19,5 +19,13 @@ db.version(1).stores({
   expenses: '++id, amount, category, paymentMethod, date, isEssential, createdAt',
 })
 
+db.version(2).stores({
+  expenses: '++id, amount, category, paymentMethod, date, isEssential, createdAt',
+}).upgrade(tx =>
+  tx.table('expenses')
+    .where('paymentMethod').equals('UPI')
+    .modify({ paymentMethod: 'Other' })
+)
+
 export type { Expense }
 export { db }

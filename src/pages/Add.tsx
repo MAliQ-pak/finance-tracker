@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import {
   CATEGORIES,
-  PAYMENT_METHODS,
+  PRIMARY_METHODS,
+  DIGITAL_METHODS,
   CATEGORY_ICONS,
   CATEGORY_COLORS,
   type Category,
@@ -136,8 +137,9 @@ export default function Add() {
       {/* Payment method */}
       <section>
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Payment method</p>
-        <div className="flex bg-slate-900 rounded-xl p-1 gap-1">
-          {PAYMENT_METHODS.map(method => (
+        {/* Cash / Card — primary segmented control */}
+        <div className="flex bg-slate-900 rounded-xl p-1 gap-1 mb-2">
+          {PRIMARY_METHODS.map(method => (
             <button
               key={method}
               onClick={() => setPaymentMethod(method)}
@@ -146,6 +148,23 @@ export default function Add() {
                 paymentMethod === method
                   ? 'bg-slate-700 text-slate-100'
                   : 'text-slate-500 active:text-slate-300'
+              )}
+            >
+              {method}
+            </button>
+          ))}
+        </div>
+        {/* Digital wallets — 3-column chip grid */}
+        <div className="grid grid-cols-3 gap-2">
+          {DIGITAL_METHODS.map(method => (
+            <button
+              key={method}
+              onClick={() => setPaymentMethod(method)}
+              className={cn(
+                'py-2 rounded-xl text-xs font-medium border transition-all active:scale-95',
+                paymentMethod === method
+                  ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
+                  : 'border-slate-800 bg-slate-900/60 text-slate-400'
               )}
             >
               {method}

@@ -23,7 +23,9 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number]
 
-export const PAYMENT_METHODS = ['Cash', 'Card', 'UPI', 'Other'] as const
+export const PRIMARY_METHODS = ['Cash', 'Card'] as const
+export const DIGITAL_METHODS = ['JazzCash', 'EasyPaisa', 'SadaPay', 'NayaPay', 'Raast', 'Other'] as const
+export const PAYMENT_METHODS = [...PRIMARY_METHODS, ...DIGITAL_METHODS] as const
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number]
 
 export const CATEGORY_ICONS: Record<Category, LucideIcon> = {
