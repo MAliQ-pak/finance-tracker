@@ -1,5 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 
+export type ExpenseType = 'need' | 'want' | 'savings'
+
 interface Expense {
   id: number
   amount: number
@@ -7,7 +9,7 @@ interface Expense {
   note: string
   paymentMethod: string
   date: string
-  isEssential: boolean
+  type: ExpenseType
   createdAt: string
 }
 
@@ -25,6 +27,15 @@ db.version(2).stores({
   tx.table('expenses')
     .where('paymentMethod').equals('UPI')
     .modify({ paymentMethod: 'Other' })
+)
+
+db.version(3).stores({
+  expenses: '++id, amount, category, paymentMethod, date, type, createdAt',
+}).upgrade(tx =>
+  tx.table('expenses').toCollection().modify((e: Record<string, unknown>) => {
+    e.type = e.isEssential ? 'need' : 'want'
+    delete e.isEssential
+  })
 )
 
 export type { Expense }

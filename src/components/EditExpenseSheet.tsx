@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Sheet } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import {
   CATEGORIES,
@@ -13,7 +12,14 @@ import {
   type PaymentMethod,
 } from '@/lib/categories'
 import { updateExpense, deleteExpense } from '@/db/expenses'
-import type { Expense } from '@/db/db'
+import type { Expense, ExpenseType } from '@/db/db'
+import { Shield, Sparkles, PiggyBank } from 'lucide-react'
+
+const TYPE_OPTIONS: { value: ExpenseType; label: string; icon: typeof Shield; color: string }[] = [
+  { value: 'need', label: 'Need', icon: Shield, color: '#3b82f6' },
+  { value: 'want', label: 'Want', icon: Sparkles, color: '#a855f7' },
+  { value: 'savings', label: 'Savings', icon: PiggyBank, color: '#10b981' },
+]
 
 interface Props {
   expense: Expense | null
@@ -28,11 +34,10 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
   const [date, setDate] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Card')
   const [note, setNote] = useState('')
-  const [isEssential, setIsEssential] = useState(false)
+  const [expenseType, setExpenseType] = useState<ExpenseType>('need')
   const [saving, setSaving] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
 
-  // Populate form when expense changes
   useEffect(() => {
     if (expense) {
       setAmount(String(expense.amount))
@@ -40,7 +45,7 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
       setDate(expense.date.slice(0, 10))
       setPaymentMethod(expense.paymentMethod as PaymentMethod)
       setNote(expense.note)
-      setIsEssential(expense.isEssential)
+      setExpenseType(expense.type)
       setDeleteConfirm(false)
     }
   }, [expense])
@@ -58,7 +63,7 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
         note: note.trim(),
         paymentMethod,
         date,
-        isEssential,
+        type: expenseType,
       })
       onClose()
     } catch {
@@ -130,6 +135,37 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
           })}
         </div>
 
+        {/* Type */}
+        <div className="grid grid-cols-3 gap-2">
+          {TYPE_OPTIONS.map(({ value, label, icon: Icon, color }) => {
+            const selected = expenseType === value
+            return (
+              <button
+                key={value}
+                onClick={() => setExpenseType(value)}
+                className={cn(
+                  'flex flex-col items-center gap-1.5 py-2.5 rounded-xl border transition-all active:scale-95',
+                  selected ? 'border-current' : 'border-slate-800 bg-slate-900/60'
+                )}
+                style={selected ? { borderColor: color, backgroundColor: `${color}18` } : undefined}
+              >
+                <div
+                  className="flex items-center justify-center w-7 h-7 rounded-lg"
+                  style={{ backgroundColor: `${color}22` }}
+                >
+                  <Icon size={14} style={{ color }} />
+                </div>
+                <span
+                  className="text-xs font-semibold"
+                  style={{ color: selected ? color : '#94a3b8' }}
+                >
+                  {label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
         {/* Date */}
         <input
           type="date"
@@ -139,7 +175,7 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
         />
 
         {/* Payment method */}
-        <div className="flex bg-slate-900 rounded-xl p-1 gap-1 mb-2">
+        <div className="flex bg-slate-900 rounded-xl p-1 gap-1">
           {PRIMARY_METHODS.map(method => (
             <button
               key={method}
@@ -180,19 +216,6 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
           rows={2}
           className="bg-slate-900 border-slate-800 text-slate-200 placeholder:text-slate-700 resize-none focus-visible:ring-emerald-500"
         />
-
-        {/* Essential toggle */}
-        <div className="flex items-center justify-between px-4 py-3 bg-slate-900 rounded-xl">
-          <div>
-            <p className="text-sm font-medium text-slate-200">Essential</p>
-            <p className="text-xs text-slate-500 mt-0.5">Rent, groceries, bills</p>
-          </div>
-          <Switch
-            checked={isEssential}
-            onCheckedChange={setIsEssential}
-            className="data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-slate-700"
-          />
-        </div>
 
         {/* Actions */}
         <div className="flex gap-3 pt-1">

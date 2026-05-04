@@ -11,7 +11,31 @@ import {
 } from '@/lib/categories'
 import { getExpensesForMonth, computeTotals } from '@/db/expenses'
 import EditExpenseSheet from '@/components/EditExpenseSheet'
-import type { Expense } from '@/db/db'
+import type { Expense, ExpenseType } from '@/db/db'
+
+const TYPE_STYLES: Record<ExpenseType, { label: string; dot: string; text: string; bg: string; border: string }> = {
+  need: {
+    label: 'Need',
+    dot: 'bg-blue-400',
+    text: 'text-blue-400',
+    bg: 'bg-blue-500/10',
+    border: 'border-blue-500/20',
+  },
+  want: {
+    label: 'Want',
+    dot: 'bg-purple-400',
+    text: 'text-purple-400',
+    bg: 'bg-purple-500/10',
+    border: 'border-purple-500/20',
+  },
+  savings: {
+    label: 'Savings',
+    dot: 'bg-emerald-400',
+    text: 'text-emerald-400',
+    bg: 'bg-emerald-500/10',
+    border: 'border-emerald-500/20',
+  },
+}
 
 export default function Home() {
   const navigate = useNavigate()
@@ -23,12 +47,11 @@ export default function Home() {
     []
   ) ?? []
 
-  const { total, essential, discretionary, count } = useMemo(
+  const { total, needs, wants, savings, count } = useMemo(
     () => computeTotals(expenses),
     [expenses]
   )
 
-  // Group by date string (YYYY-MM-DD), sorted newest first
   const { grouped, days } = useMemo(() => {
     const grouped: Record<string, Expense[]> = {}
     for (const e of expenses) {
@@ -56,18 +79,30 @@ export default function Home() {
 
           {count > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
-              <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                <span className="text-xs font-medium text-emerald-400">
-                  Essential {formatCurrency(essential)}
+              {needs > 0 && (
+                <span className={`inline-flex items-center gap-1.5 ${TYPE_STYLES.need.bg} border ${TYPE_STYLES.need.border} rounded-full px-3 py-1.5`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${TYPE_STYLES.need.dot} shrink-0`} />
+                  <span className={`text-xs font-medium ${TYPE_STYLES.need.text}`}>
+                    Needs {formatCurrency(needs)}
+                  </span>
                 </span>
-              </span>
-              <span className="inline-flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-full px-3 py-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
-                <span className="text-xs font-medium text-slate-400">
-                  Discretionary {formatCurrency(discretionary)}
+              )}
+              {wants > 0 && (
+                <span className={`inline-flex items-center gap-1.5 ${TYPE_STYLES.want.bg} border ${TYPE_STYLES.want.border} rounded-full px-3 py-1.5`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${TYPE_STYLES.want.dot} shrink-0`} />
+                  <span className={`text-xs font-medium ${TYPE_STYLES.want.text}`}>
+                    Wants {formatCurrency(wants)}
+                  </span>
                 </span>
-              </span>
+              )}
+              {savings > 0 && (
+                <span className={`inline-flex items-center gap-1.5 ${TYPE_STYLES.savings.bg} border ${TYPE_STYLES.savings.border} rounded-full px-3 py-1.5`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${TYPE_STYLES.savings.dot} shrink-0`} />
+                  <span className={`text-xs font-medium ${TYPE_STYLES.savings.text}`}>
+                    Savings {formatCurrency(savings)}
+                  </span>
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -113,7 +148,6 @@ export default function Home() {
           </div>
         ))}
 
-        {/* Bottom padding for nav clearance */}
         <div className="h-4" />
       </div>
 
@@ -134,6 +168,7 @@ function ExpenseRow({
 }) {
   const Icon = CATEGORY_ICONS[expense.category as Category] ?? CATEGORY_ICONS['Other']
   const color = CATEGORY_COLORS[expense.category as Category] ?? CATEGORY_COLORS['Other']
+  const typeStyle = TYPE_STYLES[expense.type] ?? TYPE_STYLES.want
 
   return (
     <button
@@ -160,11 +195,9 @@ function ExpenseRow({
         <p className="text-sm font-semibold text-slate-100 tabular-nums">
           {formatCurrency(expense.amount)}
         </p>
-        {expense.note && (
-          <span className="text-[10px] font-medium text-slate-600 bg-slate-800/80 px-1.5 py-0.5 rounded">
-            {expense.paymentMethod}
-          </span>
-        )}
+        <span className={`text-[10px] font-medium ${typeStyle.text} ${typeStyle.bg} px-1.5 py-0.5 rounded`}>
+          {typeStyle.label}
+        </span>
       </div>
     </button>
   )
