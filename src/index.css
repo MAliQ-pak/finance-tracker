@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* Tailwind v4 theme tokens — used by shadcn utility classes */
+@theme {
+  --color-background: #020617;      /* slate-950 */
+  --color-foreground: #f1f5f9;      /* slate-100 */
+  --color-muted: #1e293b;           /* slate-800 */
+  --color-muted-foreground: #64748b;/* slate-500 */
+  --color-input: #1e293b;           /* slate-800 – Switch unchecked / input border */
+  --color-ring: #10b981;            /* emerald-500 */
+  --color-primary: #10b981;         /* emerald-500 */
+  --color-primary-foreground: #020617;
+  --color-destructive: #ef4444;     /* red-500 */
+  --color-destructive-foreground: #f8fafc;
+}
+
 @layer base {
   *, *::before, *::after {
     box-sizing: border-box;
@@ -20,5 +34,10 @@
 
   #root {
     min-height: 100svh;
+  }
+
+  /* Native date input — dark style */
+  input[type="date"] {
+    color-scheme: dark;
   }
 }
