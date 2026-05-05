@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { Settings } from 'lucide-react'
 import { formatCurrency, getDateLabel } from '@/lib/categories'
 import { getExpensesForMonth, computeTotals } from '@/db/expenses'
 import { db } from '@/db/db'
@@ -10,12 +10,15 @@ import type { Expense, ExpenseType } from '@/db/db'
 import { calculateNoSpendStreak, calculateUnderBudgetStreak } from '@/lib/streaks'
 import { getMonthlyIncome } from '@/lib/preferences'
 import { getIcon } from '@/lib/iconMap'
-import { cn } from '@/lib/utils'
 
-const TYPE_STYLES: Record<ExpenseType, { label: string; dot: string; text: string; bg: string; border: string }> = {
-  need:    { label: 'Need',    dot: 'bg-blue-400',    text: 'text-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/20'    },
-  want:    { label: 'Want',    dot: 'bg-purple-400',  text: 'text-purple-400',  bg: 'bg-purple-500/10',  border: 'border-purple-500/20'  },
-  savings: { label: 'Savings', dot: 'bg-emerald-400', text: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+const TYPE_TAG: Record<ExpenseType, { label: string; text: string; bg: string }> = {
+  need:    { label: 'Need',    text: 'text-[rgba(96,165,250,0.75)]',  bg: 'bg-[rgba(96,165,250,0.07)]'  },
+  want:    { label: 'Want',    text: 'text-[rgba(167,139,250,0.75)]', bg: 'bg-[rgba(167,139,250,0.07)]' },
+  savings: { label: 'Savings', text: 'text-[rgba(74,222,128,0.75)]',  bg: 'bg-[rgba(74,222,128,0.07)]'  },
+}
+
+function pct(part: number, total: number) {
+  return total > 0 ? Math.round((part / total) * 100) : 0
 }
 
 export default function Home() {
@@ -24,7 +27,10 @@ export default function Home() {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null)
 
   const income = getMonthlyIncome()
-  const dailyBudget = income > 0 ? income / new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() : 0
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const dailyBudget = income > 0 ? income / daysInMonth : 0
+
+  const monthLabel = now.toLocaleString('default', { month: 'long', year: 'numeric' })
 
   const expenses = useLiveQuery(
     () => getExpensesForMonth(now.getFullYear(), now.getMonth() + 1),
@@ -56,93 +62,109 @@ export default function Home() {
   }, [expenses])
 
   const noSpendStreak = useMemo(() => calculateNoSpendStreak(allExpenses), [allExpenses])
-  const underBudgetStreak = useMemo(() => calculateUnderBudgetStreak(allExpenses, dailyBudget), [allExpenses, dailyBudget])
+  const underBudgetStreak = useMemo(
+    () => calculateUnderBudgetStreak(allExpenses, dailyBudget),
+    [allExpenses, dailyBudget]
+  )
+
+  const needsPct   = pct(needs, total)
+  const wantsPct   = pct(wants, total)
+  const savingsPct = pct(savings, total)
 
   return (
     <>
-      <div className="flex flex-col gap-0">
-        {/* Month summary */}
-        <div className="px-4 pt-5 pb-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">This month</p>
-          <p className="text-4xl font-bold text-slate-100 tabular-nums">{formatCurrency(total)}</p>
-          <p className="text-sm text-slate-500 mt-1">{count} transaction{count !== 1 ? 's' : ''}</p>
-
-          {count > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {needs > 0 && (
-                <span className={`inline-flex items-center gap-1.5 ${TYPE_STYLES.need.bg} border ${TYPE_STYLES.need.border} rounded-full px-3 py-1.5`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${TYPE_STYLES.need.dot} shrink-0`} />
-                  <span className={`text-xs font-medium ${TYPE_STYLES.need.text}`}>Needs {formatCurrency(needs)}</span>
-                </span>
-              )}
-              {wants > 0 && (
-                <span className={`inline-flex items-center gap-1.5 ${TYPE_STYLES.want.bg} border ${TYPE_STYLES.want.border} rounded-full px-3 py-1.5`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${TYPE_STYLES.want.dot} shrink-0`} />
-                  <span className={`text-xs font-medium ${TYPE_STYLES.want.text}`}>Wants {formatCurrency(wants)}</span>
-                </span>
-              )}
-              {savings > 0 && (
-                <span className={`inline-flex items-center gap-1.5 ${TYPE_STYLES.savings.bg} border ${TYPE_STYLES.savings.border} rounded-full px-3 py-1.5`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${TYPE_STYLES.savings.dot} shrink-0`} />
-                  <span className={`text-xs font-medium ${TYPE_STYLES.savings.text}`}>Savings {formatCurrency(savings)}</span>
-                </span>
-              )}
-            </div>
-          )}
+      <div className="flex flex-col">
+        {/* Page header */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-0">
+          <span className="text-[rgba(255,255,255,0.4)] text-xs font-medium">{monthLabel}</span>
+          <button
+            onClick={() => navigate('/settings')}
+            className="flex items-center justify-center w-8 h-8 rounded-full bg-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.35)] active:bg-[rgba(255,255,255,0.08)] transition-colors"
+            aria-label="Settings"
+          >
+            <Settings size={14} strokeWidth={1.5} />
+          </button>
         </div>
 
-        {/* Streak pills */}
-        <div className="px-4 pb-3">
-          {noSpendStreak === 0 && underBudgetStreak === 0 ? (
-            <span className="inline-flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-full px-3 py-1.5">
-              <span className="text-xs text-slate-600">Start a streak today</span>
-            </span>
-          ) : (
-            <div className="flex gap-2 flex-wrap">
-              {noSpendStreak > 0 && (
-                <span className="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1.5">
-                  <span className="text-xs">🔥</span>
-                  <span className="text-xs font-medium text-amber-400">No-spend: {noSpendStreak} day{noSpendStreak !== 1 ? 's' : ''}</span>
-                </span>
-              )}
-              {underBudgetStreak > 0 && dailyBudget > 0 && (
-                <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1.5">
-                  <span className="text-xs">✓</span>
-                  <span className="text-xs font-medium text-emerald-400">Under budget: {underBudgetStreak} day{underBudgetStreak !== 1 ? 's' : ''}</span>
-                </span>
-              )}
-            </div>
+        {/* Hero */}
+        <div className="px-6 pt-5 pb-6">
+          <p className="section-label mb-3">Spent this month</p>
+          <p className="hero-amount">{formatCurrency(total)}</p>
+          <p className="text-[rgba(255,255,255,0.25)] text-xs mt-2 tabular">
+            {count} transaction{count !== 1 ? 's' : ''}
+          </p>
+
+          {/* 3-segment thin bar */}
+          {count > 0 && (
+            <>
+              <div className="flex gap-[2px] mt-5 h-[2px] rounded-sm overflow-hidden">
+                {needs > 0 && (
+                  <div style={{ flex: needs }} className="bg-[rgba(96,165,250,0.55)] rounded-sm" />
+                )}
+                {wants > 0 && (
+                  <div style={{ flex: wants }} className="bg-[rgba(167,139,250,0.55)] rounded-sm" />
+                )}
+                {savings > 0 && (
+                  <div style={{ flex: savings }} className="bg-[rgba(74,222,128,0.55)] rounded-sm" />
+                )}
+              </div>
+              <div className="flex gap-4 mt-2.5">
+                {needs > 0 && (
+                  <span className="text-[10px] font-medium text-[rgba(96,165,250,0.6)]">
+                    Needs {needsPct}%
+                  </span>
+                )}
+                {wants > 0 && (
+                  <span className="text-[10px] font-medium text-[rgba(167,139,250,0.6)]">
+                    Wants {wantsPct}%
+                  </span>
+                )}
+                {savings > 0 && (
+                  <span className="text-[10px] font-medium text-[rgba(74,222,128,0.6)]">
+                    Savings {savingsPct}%
+                  </span>
+                )}
+              </div>
+            </>
           )}
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-slate-800 mx-4" />
+        <div className="h-px bg-[rgba(255,255,255,0.05)]" />
+
+        {/* Streak rows */}
+        {noSpendStreak > 0 && (
+          <div className="flex items-center justify-between px-6 py-3 border-b border-[rgba(255,255,255,0.05)]">
+            <span className="section-label">Streak</span>
+            <span className="text-[rgba(255,255,255,0.55)] text-xs">
+              No-spend · {noSpendStreak} day{noSpendStreak !== 1 ? 's' : ''} running
+            </span>
+          </div>
+        )}
+        {underBudgetStreak > 0 && dailyBudget > 0 && (
+          <div className="flex items-center justify-between px-6 py-3 border-b border-[rgba(255,255,255,0.05)]">
+            <span className="section-label">Budget</span>
+            <span className="text-[rgba(255,255,255,0.55)] text-xs">
+              Under budget · {underBudgetStreak} day{underBudgetStreak !== 1 ? 's' : ''}
+            </span>
+          </div>
+        )}
 
         {/* Empty state */}
         {count === 0 && (
-          <div className="flex flex-col items-center justify-center gap-3 py-20 px-8">
-            <p className="text-slate-300 font-medium">No expenses yet</p>
-            <p className="text-sm text-slate-500 text-center leading-relaxed">
-              Tap the{' '}
-              <button
-                onClick={() => navigate('/add')}
-                className="inline-flex items-center gap-1 text-emerald-400 font-medium"
-              >
-                <Plus size={13} strokeWidth={2.5} />
-                Add
-              </button>{' '}
-              button below to log your first expense
-            </p>
+          <div className="flex flex-col items-center justify-center gap-2 py-24">
+            <p className="text-[rgba(255,255,255,0.4)] text-sm font-medium">No expenses yet</p>
+            <p className="text-[rgba(255,255,255,0.18)] text-xs">Tap + to log your first</p>
           </div>
         )}
 
         {/* Expense list grouped by date */}
         {days.map(day => (
           <div key={day}>
-            <div className="px-4 pt-4 pb-1.5">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{getDateLabel(day)}</p>
+            <div className="px-6 pt-5 pb-2">
+              <p className="section-label">{getDateLabel(day)}</p>
             </div>
-            <div className="divide-y divide-slate-800/60">
+            <div>
               {grouped[day].map(expense => (
                 <ExpenseRow
                   key={expense.id}
@@ -155,7 +177,7 @@ export default function Home() {
           </div>
         ))}
 
-        <div className="h-4" />
+        <div className="h-6" />
       </div>
 
       <EditExpenseSheet
@@ -178,30 +200,38 @@ function ExpenseRow({
   const catData = categoryMap[expense.category]
   const Icon = getIcon(catData?.icon ?? 'MoreHorizontal')
   const color = catData?.color ?? '#6b7280'
-  const typeStyle = TYPE_STYLES[expense.type] ?? TYPE_STYLES.want
+  const tag = TYPE_TAG[expense.type] ?? TYPE_TAG.want
 
   return (
     <button
       onClick={onPress}
-      className="flex items-center gap-3 w-full px-4 py-3 text-left active:bg-slate-900/60 transition-colors"
+      className="flex items-center gap-4 w-full px-6 py-3.5 text-left border-b border-[rgba(255,255,255,0.05)] active:bg-[rgba(255,255,255,0.02)] transition-colors"
     >
-      <div className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0" style={{ backgroundColor: `${color}22` }}>
-        <Icon size={18} style={{ color }} />
+      {/* Icon */}
+      <div
+        className="flex items-center justify-center w-9 h-9 rounded-[10px] shrink-0"
+        style={{ backgroundColor: `${color}14` }}
+      >
+        <Icon size={16} strokeWidth={1.5} style={{ color: `${color}CC` }} />
       </div>
 
+      {/* Label */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-200">{expense.category}</p>
-        {expense.note ? (
-          <p className="text-xs text-slate-500 truncate">{expense.note}</p>
-        ) : (
-          <p className="text-xs text-slate-700">{expense.paymentMethod}</p>
-        )}
+        <p className="text-[rgba(255,255,255,0.78)] text-[13px] font-medium leading-snug">
+          {expense.category}
+        </p>
+        <p className="text-[rgba(255,255,255,0.25)] text-[11px] truncate">
+          {expense.note || expense.paymentMethod}
+        </p>
       </div>
 
+      {/* Amount + tag */}
       <div className="flex flex-col items-end gap-1 shrink-0">
-        <p className="text-sm font-semibold text-slate-100 tabular-nums">{formatCurrency(expense.amount)}</p>
-        <span className={cn(`text-[10px] font-medium ${typeStyle.text} ${typeStyle.bg} px-1.5 py-0.5 rounded`)}>
-          {typeStyle.label}
+        <p className="text-[rgba(255,255,255,0.82)] text-[13px] font-semibold tabular">
+          {formatCurrency(expense.amount)}
+        </p>
+        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-sm ${tag.bg} ${tag.text}`}>
+          {tag.label}
         </span>
       </div>
     </button>
