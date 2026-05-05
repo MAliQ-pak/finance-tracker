@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   PRIMARY_METHODS,
@@ -18,9 +19,9 @@ import { getIcon } from '@/lib/iconMap'
 const today = new Date().toISOString().slice(0, 10)
 
 const TYPE_OPTIONS: { value: ExpenseType; label: string; icon: typeof Shield; color: string }[] = [
-  { value: 'need',    label: 'Need',    icon: Shield,    color: '#3b82f6' },
-  { value: 'want',    label: 'Want',    icon: Sparkles,  color: '#a855f7' },
-  { value: 'savings', label: 'Savings', icon: PiggyBank, color: '#10b981' },
+  { value: 'need',    label: 'Need',    icon: Shield,    color: 'rgba(96,165,250,0.75)'  },
+  { value: 'want',    label: 'Want',    icon: Sparkles,  color: 'rgba(167,139,250,0.75)' },
+  { value: 'savings', label: 'Savings', icon: PiggyBank, color: 'rgba(74,222,128,0.75)'  },
 ]
 
 export default function Add() {
@@ -67,40 +68,47 @@ export default function Add() {
       setTimeout(() => {
         navigate('/')
         setSaved(false)
-      }, 600)
+      }, 500)
     } catch {
       setSaving(false)
     }
   }
 
   return (
-    <div className="flex flex-col gap-5 px-4 py-5 pb-8 overflow-y-auto">
-      {/* Amount */}
-      <div className="flex flex-col items-center gap-1 py-6 bg-slate-900 rounded-2xl">
-        <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-2">Amount</p>
-        <div className="flex items-center gap-1.5">
-          <span className="text-3xl font-light text-slate-500">Rs</span>
+    <div className="flex flex-col overflow-y-auto">
+      {/* Page header */}
+      <div className="px-6 pt-5 pb-0">
+        <p className="text-[rgba(255,255,255,0.85)] text-[20px] font-[700] tracking-[-0.8px]">Add expense</p>
+      </div>
+
+      {/* Amount block */}
+      <div className="flex flex-col items-center gap-1 py-8 px-6">
+        <p className="section-label mb-4">Amount</p>
+        <div className="flex items-baseline gap-2">
+          <span className="text-[rgba(255,255,255,0.25)] text-2xl font-light">Rs</span>
           <input
             type="text"
             inputMode="decimal"
             value={amount}
             onChange={e => setAmount(e.target.value.replace(/[^\d.]/g, ''))}
             placeholder="0"
-            className="bg-transparent text-5xl font-bold text-slate-100 outline-none text-center placeholder:text-slate-700 min-w-[2ch]"
-            style={{ width: `${Math.max(2, amount.length + 1)}ch` }}
             autoFocus
+            className="bg-transparent text-[56px] font-[800] text-[rgba(255,255,255,0.93)] outline-none text-center placeholder:text-[rgba(255,255,255,0.1)] tracking-[-2px] tabular min-w-[2ch]"
+            style={{ width: `${Math.max(2, amount.length + 1)}ch` }}
           />
         </div>
         {parsedAmount > 0 && (
-          <p className="text-xs text-slate-600 mt-1">
-            Rs {parsedAmount.toLocaleString('en-US')}
+          <p className="text-[rgba(255,255,255,0.2)] text-xs tabular mt-1">
+            Rs {parsedAmount.toLocaleString('en-PK')}
           </p>
         )}
       </div>
 
+      <div className="h-px bg-[rgba(255,255,255,0.05)]" />
+
       {/* Category */}
-      <section>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Category</p>
+      <div className="px-6 pt-5 pb-4">
+        <p className="section-label mb-3">Category</p>
         <div className="grid grid-cols-2 gap-2">
           {categories.map(cat => {
             const Icon = getIcon(cat.icon)
@@ -110,30 +118,37 @@ export default function Add() {
                 key={cat.id}
                 onClick={() => setCategory(cat.label)}
                 className={cn(
-                  'flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-95',
+                  'flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98]',
                   selected
-                    ? 'border-emerald-500 bg-emerald-500/10'
-                    : 'border-slate-800 bg-slate-900/60'
+                    ? 'border-[rgba(255,255,255,0.2)] bg-[rgba(255,255,255,0.05)]'
+                    : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)]'
                 )}
               >
                 <div
-                  className="flex items-center justify-center w-9 h-9 rounded-lg shrink-0"
-                  style={{ backgroundColor: `${cat.color}22` }}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg shrink-0"
+                  style={{ backgroundColor: `${cat.color}18` }}
                 >
-                  <Icon size={17} style={{ color: cat.color }} />
+                  <Icon size={15} strokeWidth={1.5} style={{ color: selected ? cat.color : `${cat.color}99` }} />
                 </div>
-                <span className={cn('text-sm font-medium', selected ? 'text-emerald-400' : 'text-slate-300')}>
+                <span
+                  className={cn(
+                    'text-[13px] font-medium',
+                    selected ? 'text-[rgba(255,255,255,0.85)]' : 'text-[rgba(255,255,255,0.45)]'
+                  )}
+                >
                   {cat.label}
                 </span>
               </button>
             )
           })}
         </div>
-      </section>
+      </div>
+
+      <div className="h-px bg-[rgba(255,255,255,0.05)]" />
 
       {/* Type */}
-      <section>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Type</p>
+      <div className="px-6 pt-5 pb-4">
+        <p className="section-label mb-3">Type</p>
         <div className="grid grid-cols-3 gap-2">
           {TYPE_OPTIONS.map(({ value, label, icon: Icon, color }) => {
             const selected = expenseType === value
@@ -141,126 +156,154 @@ export default function Add() {
               <button
                 key={value}
                 onClick={() => { setExpenseType(value); if (value !== 'savings') setGoalId(null) }}
-                className="flex flex-col items-center gap-2 py-3 rounded-xl border transition-all active:scale-95"
-                style={selected ? { borderColor: color, backgroundColor: `${color}18` } : { borderColor: '#1e293b', backgroundColor: 'rgba(15,23,42,0.6)' }}
+                className={cn(
+                  'flex flex-col items-center gap-2 py-3.5 rounded-xl border transition-all active:scale-[0.98]',
+                  selected
+                    ? 'border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.05)]'
+                    : 'border-[rgba(255,255,255,0.05)] bg-transparent'
+                )}
               >
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg" style={{ backgroundColor: `${color}22` }}>
-                  <Icon size={16} style={{ color }} />
-                </div>
-                <span className="text-xs font-semibold" style={{ color: selected ? color : '#94a3b8' }}>{label}</span>
+                <Icon size={16} strokeWidth={1.5} style={{ color: selected ? color : 'rgba(255,255,255,0.2)' }} />
+                <span
+                  className="text-xs font-medium"
+                  style={{ color: selected ? color : 'rgba(255,255,255,0.25)' }}
+                >
+                  {label}
+                </span>
               </button>
             )
           })}
         </div>
-      </section>
+      </div>
 
       {/* Goal picker (savings only) */}
       {expenseType === 'savings' && goals.length > 0 && (
-        <section>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Link to Goal <span className="text-slate-600 normal-case font-normal">(optional)</span></p>
-          <div className="flex flex-col gap-2">
-            <button
-              onClick={() => setGoalId(null)}
-              className={cn(
-                'flex items-center gap-3 px-4 py-3 rounded-xl border text-sm transition-all',
-                goalId === null ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' : 'border-slate-800 bg-slate-900/60 text-slate-400'
-              )}
-            >
-              No specific goal
-            </button>
-            {goals.map(g => {
-              const Icon = getIcon(g.icon)
-              return (
-                <button
-                  key={g.id}
-                  onClick={() => setGoalId(g.id)}
-                  className={cn(
-                    'flex items-center gap-3 px-4 py-3 rounded-xl border text-sm transition-all',
-                    goalId === g.id ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-800 bg-slate-900/60'
-                  )}
-                >
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${g.color}22` }}>
-                    <Icon size={14} style={{ color: g.color }} />
-                  </div>
-                  <span className={goalId === g.id ? 'text-emerald-400' : 'text-slate-300'}>{g.name}</span>
-                </button>
-              )
-            })}
+        <>
+          <div className="h-px bg-[rgba(255,255,255,0.05)]" />
+          <div className="px-6 pt-5 pb-4">
+            <p className="section-label mb-3">Link to Goal <span className="normal-case font-normal text-[rgba(255,255,255,0.18)]">(optional)</span></p>
+            <div className="flex flex-col gap-1.5">
+              <button
+                onClick={() => setGoalId(null)}
+                className={cn(
+                  'flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs transition-all text-left',
+                  goalId === null
+                    ? 'border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.7)]'
+                    : 'border-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.3)]'
+                )}
+              >
+                No specific goal
+                {goalId === null && <Check size={12} className="text-[rgba(255,255,255,0.5)]" />}
+              </button>
+              {goals.map(g => {
+                const Icon = getIcon(g.icon)
+                return (
+                  <button
+                    key={g.id}
+                    onClick={() => setGoalId(g.id)}
+                    className={cn(
+                      'flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl border text-xs transition-all',
+                      goalId === g.id
+                        ? 'border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.7)]'
+                        : 'border-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.3)]'
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon size={12} style={{ color: g.color }} />
+                      {g.name}
+                    </div>
+                    {goalId === g.id && <Check size={12} className="text-[rgba(255,255,255,0.5)]" />}
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </section>
+        </>
       )}
 
+      <div className="h-px bg-[rgba(255,255,255,0.05)]" />
+
       {/* Date */}
-      <section>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Date</p>
+      <div className="px-6 pt-5 pb-4">
+        <p className="section-label mb-3">Date</p>
         <input
           type="date"
           value={date}
           onChange={e => setDate(e.target.value)}
-          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-emerald-500 transition-colors"
+          className="w-full bg-transparent border border-[rgba(255,255,255,0.07)] rounded-xl px-4 py-3 text-sm text-[rgba(255,255,255,0.6)] outline-none focus:border-[rgba(255,255,255,0.18)] transition-colors"
         />
-      </section>
+      </div>
+
+      <div className="h-px bg-[rgba(255,255,255,0.05)]" />
 
       {/* Payment method */}
-      <section>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Payment method</p>
-        <div className="flex bg-slate-900 rounded-xl p-1 gap-1 mb-2">
+      <div className="px-6 pt-5 pb-4">
+        <p className="section-label mb-3">Payment method</p>
+        {/* Primary */}
+        <div className="flex bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.05)] rounded-xl p-1 gap-1 mb-2">
           {PRIMARY_METHODS.map(method => (
             <button
               key={method}
               onClick={() => setPaymentMethod(method)}
               className={cn(
                 'flex-1 py-2 rounded-lg text-sm font-medium transition-all',
-                paymentMethod === method ? 'bg-slate-700 text-slate-100' : 'text-slate-500 active:text-slate-300'
+                paymentMethod === method
+                  ? 'bg-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.78)]'
+                  : 'text-[rgba(255,255,255,0.28)]'
               )}
             >
               {method}
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        {/* Digital */}
+        <div className="grid grid-cols-3 gap-1.5">
           {DIGITAL_METHODS.map(method => (
             <button
               key={method}
               onClick={() => setPaymentMethod(method)}
               className={cn(
-                'py-2 rounded-xl text-xs font-medium border transition-all active:scale-95',
+                'py-2 rounded-lg text-xs font-medium border transition-all active:scale-[0.97]',
                 paymentMethod === method
-                  ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
-                  : 'border-slate-800 bg-slate-900/60 text-slate-400'
+                  ? 'border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.7)]'
+                  : 'border-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.25)]'
               )}
             >
               {method}
             </button>
           ))}
         </div>
-      </section>
+      </div>
+
+      <div className="h-px bg-[rgba(255,255,255,0.05)]" />
 
       {/* Note */}
-      <section>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Note</p>
+      <div className="px-6 pt-5 pb-4">
+        <p className="section-label mb-3">Note</p>
         <Textarea
           value={note}
           onChange={e => setNote(e.target.value)}
           placeholder="What was this for?"
-          rows={3}
-          className="bg-slate-900 border-slate-800 text-slate-200 placeholder:text-slate-700 resize-none focus-visible:ring-emerald-500 focus-visible:border-transparent"
+          rows={2}
+          className="bg-transparent border-[rgba(255,255,255,0.07)] text-[rgba(255,255,255,0.6)] placeholder:text-[rgba(255,255,255,0.15)] resize-none focus-visible:ring-0 focus-visible:border-[rgba(255,255,255,0.18)] rounded-xl"
         />
-      </section>
+      </div>
 
       {/* Save button */}
-      <button
-        onClick={handleSave}
-        disabled={!canSave || saving}
-        className={cn(
-          'w-full py-4 rounded-2xl font-semibold text-base transition-all active:scale-[0.98]',
-          saved
-            ? 'bg-emerald-400 text-slate-950'
-            : 'bg-emerald-500 text-slate-950 disabled:opacity-35 disabled:cursor-not-allowed'
-        )}
-      >
-        {saving ? 'Saving…' : saved ? 'Saved!' : 'Save Expense'}
-      </button>
+      <div className="px-6 pb-8 pt-2">
+        <button
+          onClick={handleSave}
+          disabled={!canSave || saving}
+          className={cn(
+            'w-full py-4 rounded-2xl font-semibold text-sm transition-all active:scale-[0.98]',
+            saved
+              ? 'bg-[rgba(255,255,255,0.85)] text-[#080808]'
+              : 'bg-[rgba(255,255,255,0.9)] text-[#080808] disabled:opacity-25 disabled:cursor-not-allowed'
+          )}
+        >
+          {saving ? 'Saving…' : saved ? 'Saved!' : 'Save Expense'}
+        </button>
+      </div>
     </div>
   )
 }
