@@ -33,24 +33,24 @@ function CategoryForm({
   const SelectedIcon = getIcon(icon)
 
   return (
-    <div className="border-t border-[rgba(255,255,255,0.05)]">
-      <h3 className="text-[rgba(255,255,255,0.70)] text-xs font-semibold uppercase tracking-widest text-center py-4 border-b border-[rgba(255,255,255,0.05)]">
+    <div className="border-t border-[rgba(var(--fg),0.05)]">
+      <h3 className="text-[rgba(var(--fg),0.70)] text-xs font-semibold uppercase tracking-widest text-center py-4 border-b border-[rgba(var(--fg),0.05)]">
         {initial?.label ? 'Edit Category' : 'New Category'}
       </h3>
 
       {/* Preview */}
-      <div className="flex items-center gap-3 px-6 py-3 border-b border-[rgba(255,255,255,0.05)]">
+      <div className="flex items-center gap-3 px-6 py-3 border-b border-[rgba(var(--fg),0.05)]">
         <div
           className="flex items-center justify-center w-9 h-9 rounded-[10px] shrink-0"
           style={{ backgroundColor: `${color}18` }}
         >
           <SelectedIcon size={16} strokeWidth={1.5} style={{ color }} />
         </div>
-        <span className="text-[rgba(255,255,255,0.6)] text-[13px] font-medium">{label || 'Preview'}</span>
+        <span className="text-[rgba(var(--fg),0.6)] text-[13px] font-medium">{label || 'Preview'}</span>
       </div>
 
       {/* Name */}
-      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
+      <div className="px-6 py-4 border-b border-[rgba(var(--fg),0.05)]">
         <p className="section-label mb-2">Name</p>
         <input
           type="text"
@@ -58,12 +58,12 @@ function CategoryForm({
           onChange={e => setLabel(e.target.value)}
           placeholder="Category name"
           autoFocus
-          className="w-full bg-transparent border border-[rgba(255,255,255,0.07)] rounded-xl px-4 py-3 text-sm text-[rgba(255,255,255,0.75)] placeholder:text-[rgba(255,255,255,0.15)] outline-none focus:border-[rgba(255,255,255,0.18)] transition-colors"
+          className="w-full bg-transparent border border-[rgba(var(--fg),0.07)] rounded-xl px-4 py-3 text-sm text-[rgba(var(--fg),0.75)] placeholder:text-[rgba(var(--fg),0.15)] outline-none focus:border-[rgba(var(--fg),0.18)] transition-colors"
         />
       </div>
 
       {/* Color */}
-      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
+      <div className="px-6 py-4 border-b border-[rgba(var(--fg),0.05)]">
         <p className="section-label mb-3">Color</p>
         <div className="flex flex-wrap gap-2.5">
           {PRESET_COLORS.map(c => (
@@ -74,7 +74,7 @@ function CategoryForm({
               style={{ backgroundColor: c }}
             >
               {color === c && (
-                <Check size={12} className="absolute inset-0 m-auto text-[#080808]" strokeWidth={2.5} />
+                <Check size={12} className="absolute inset-0 m-auto text-[var(--btn-primary-text)]" strokeWidth={2.5} />
               )}
             </button>
           ))}
@@ -82,7 +82,7 @@ function CategoryForm({
       </div>
 
       {/* Icon picker */}
-      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
+      <div className="px-6 py-4 border-b border-[rgba(var(--fg),0.05)]">
         <p className="section-label mb-3">Icon</p>
         <div className="grid grid-cols-7 gap-1.5 max-h-48 overflow-y-auto">
           {PICKER_ICONS.map(({ name, icon: Icon }) => {
@@ -94,11 +94,11 @@ function CategoryForm({
                 className={cn(
                   'flex items-center justify-center w-10 h-10 rounded-xl border transition-all',
                   selected
-                    ? 'border-[rgba(255,255,255,0.2)] bg-[rgba(255,255,255,0.05)]'
-                    : 'border-[rgba(255,255,255,0.06)] bg-transparent'
+                    ? 'border-[rgba(var(--fg),0.2)] bg-[rgba(var(--fg),0.05)]'
+                    : 'border-[rgba(var(--fg),0.06)] bg-transparent'
                 )}
               >
-                <Icon size={15} strokeWidth={1.5} style={{ color: selected ? color : 'rgba(255,255,255,0.3)' }} />
+                <Icon size={15} strokeWidth={1.5} style={{ color: selected ? color : 'rgba(var(--fg),0.3)' }} />
               </button>
             )
           })}
@@ -109,14 +109,14 @@ function CategoryForm({
       <div className="flex gap-3 px-6 py-4">
         <button
           onClick={onCancel}
-          className="flex-1 py-3.5 rounded-xl border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.60)] text-sm font-semibold transition-all active:scale-[0.98]"
+          className="flex-1 py-3.5 rounded-xl border border-[rgba(var(--fg),0.06)] text-[rgba(var(--fg),0.60)] text-sm font-semibold transition-all active:scale-[0.98]"
         >
           Cancel
         </button>
         <button
           onClick={() => canSave && onSave({ label: label.trim(), icon, color })}
           disabled={!canSave}
-          className="flex-1 py-3.5 rounded-xl bg-[rgba(255,255,255,0.9)] text-[#080808] text-sm font-semibold disabled:opacity-25 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
+          className="flex-1 py-3.5 rounded-xl bg-[rgba(var(--fg),0.9)] text-[var(--btn-primary-text)] text-sm font-semibold disabled:opacity-25 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
         >
           Save
         </button>
@@ -159,7 +159,7 @@ function CategoryRow({
   }
 
   return (
-    <div className="flex items-center gap-3 px-6 py-3.5 border-b border-[rgba(255,255,255,0.05)]">
+    <div className="flex items-center gap-3 px-6 py-3.5 border-b border-[rgba(var(--fg),0.05)]">
       <div
         className="flex items-center justify-center w-9 h-9 rounded-[10px] shrink-0"
         style={{ backgroundColor: `${cat.color}14` }}
@@ -176,25 +176,25 @@ function CategoryRow({
             if (e.key === 'Enter') handleRename()
             if (e.key === 'Escape') setRenaming(false)
           }}
-          className="flex-1 bg-transparent border-b border-[rgba(255,255,255,0.18)] pb-0.5 text-[13px] text-[rgba(255,255,255,0.75)] outline-none"
+          className="flex-1 bg-transparent border-b border-[rgba(var(--fg),0.18)] pb-0.5 text-[13px] text-[rgba(var(--fg),0.75)] outline-none"
           autoFocus
         />
       ) : (
-        <span className="flex-1 text-[rgba(255,255,255,0.65)] text-[13px] font-medium min-w-0 truncate">{cat.label}</span>
+        <span className="flex-1 text-[rgba(var(--fg),0.65)] text-[13px] font-medium min-w-0 truncate">{cat.label}</span>
       )}
 
       <div className="flex items-center gap-0.5 shrink-0">
         <button
           onClick={onMoveUp}
           disabled={isFirst}
-          className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.50)] disabled:opacity-20 active:text-[rgba(255,255,255,0.5)]"
+          className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(var(--fg),0.50)] disabled:opacity-20 active:text-[rgba(var(--fg),0.5)]"
         >
           <ChevronUp size={13} strokeWidth={1.5} />
         </button>
         <button
           onClick={onMoveDown}
           disabled={isLast}
-          className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.50)] disabled:opacity-20 active:text-[rgba(255,255,255,0.5)]"
+          className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(var(--fg),0.50)] disabled:opacity-20 active:text-[rgba(var(--fg),0.5)]"
         >
           <ChevronDown size={13} strokeWidth={1.5} />
         </button>
@@ -206,13 +206,13 @@ function CategoryRow({
                 if (renaming) handleRename()
                 else { setRenaming(true); setNewName(cat.label) }
               }}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.70)] active:text-[rgba(255,255,255,0.5)]"
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(var(--fg),0.70)] active:text-[rgba(var(--fg),0.5)]"
             >
-              {renaming ? <Check size={12} strokeWidth={2} className="text-[rgba(74,222,128,0.7)]" /> : <Edit2 size={12} strokeWidth={1.5} />}
+              {renaming ? <Check size={12} strokeWidth={2} className="text-[rgba(var(--rgb-savings),0.7)]" /> : <Edit2 size={12} strokeWidth={1.5} />}
             </button>
             <button
               onClick={() => onEdit()}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.70)] active:text-[rgba(255,255,255,0.5)]"
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(var(--fg),0.70)] active:text-[rgba(var(--fg),0.5)]"
             >
               <Edit2 size={12} strokeWidth={1.5} />
             </button>
@@ -223,7 +223,7 @@ function CategoryRow({
               }}
               className={cn(
                 'flex items-center justify-center w-7 h-7 rounded-lg transition-all',
-                deleteConfirm ? 'text-[rgba(248,113,113,0.8)]' : 'text-[rgba(255,255,255,0.50)] active:text-[rgba(248,113,113,0.6)]'
+                deleteConfirm ? 'text-[rgba(var(--rgb-warning),0.8)]' : 'text-[rgba(var(--fg),0.50)] active:text-[rgba(var(--rgb-warning),0.6)]'
               )}
             >
               <Trash2 size={12} strokeWidth={1.5} />
@@ -266,15 +266,15 @@ export default function ManageCategories() {
       <div className="flex items-center gap-3 px-6 pt-5 pb-0">
         <button
           onClick={() => navigate('/settings')}
-          className="flex items-center justify-center w-8 h-8 -ml-1 rounded-full text-[rgba(255,255,255,0.60)] active:text-[rgba(255,255,255,0.6)] transition-colors"
+          className="flex items-center justify-center w-8 h-8 -ml-1 rounded-full text-[rgba(var(--fg),0.60)] active:text-[rgba(var(--fg),0.6)] transition-colors"
         >
           <ChevronLeft size={18} strokeWidth={1.5} />
         </button>
-        <p className="text-[rgba(255,255,255,0.85)] text-[20px] font-[700] tracking-[-0.8px] flex-1">Categories</p>
+        <p className="text-[rgba(var(--fg),0.85)] text-[20px] font-[700] tracking-[-0.8px] flex-1">Categories</p>
         {!showAdd && !editingCat && (
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center justify-center w-7 h-7 rounded-full bg-[rgba(255,255,255,0.07)] text-[rgba(255,255,255,0.5)] active:bg-[rgba(255,255,255,0.1)] transition-colors"
+            className="flex items-center justify-center w-7 h-7 rounded-full bg-[rgba(var(--fg),0.07)] text-[rgba(var(--fg),0.5)] active:bg-[rgba(var(--fg),0.1)] transition-colors"
             aria-label="Add category"
           >
             <Plus size={14} strokeWidth={2} />
@@ -282,11 +282,11 @@ export default function ManageCategories() {
         )}
       </div>
 
-      <p className="px-6 pt-2 pb-5 text-[rgba(255,255,255,0.50)] text-xs leading-relaxed">
+      <p className="px-6 pt-2 pb-5 text-[rgba(var(--fg),0.50)] text-xs leading-relaxed">
         Default categories can be reordered. Only custom categories can be renamed or deleted.
       </p>
 
-      <div className="h-px bg-[rgba(255,255,255,0.05)]" />
+      <div className="h-px bg-[rgba(var(--fg),0.05)]" />
 
       {/* Form */}
       {showAdd && (

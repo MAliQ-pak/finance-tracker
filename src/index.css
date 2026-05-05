@@ -1,35 +1,75 @@
 @import "tailwindcss";
 
-/* Premium Calm — Direction 2 design tokens */
-@theme {
-  --color-background: #080808;
-  --color-surface: #0f0f0f;
-  --color-foreground: rgba(255,255,255,0.85);
+/* ── Theme CSS Variables ─────────────────────────────────────────── */
 
-  /* shadcn compatibility */
-  --color-muted: rgba(255,255,255,0.06);
-  --color-muted-foreground: rgba(255,255,255,0.4);
-  --color-input: rgba(255,255,255,0.06);
-  --color-ring: rgba(255,255,255,0.25);
-  --color-primary: rgba(255,255,255,0.9);
-  --color-primary-foreground: #080808;
-  --color-destructive: rgba(248,113,113,0.85);
-  --color-destructive-foreground: rgba(255,255,255,0.9);
+:root {
+  /* Light mode palette (activated in Part 3) */
+  --fg: 0,0,0;
+  --bg-base: #fafafa;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f4f4f5;
+  --color-scheme: light;
+
+  /* Semantic RGB tuples — light mode (deeper for readability on white) */
+  --rgb-need: 37,99,235;
+  --rgb-want: 124,58,237;
+  --rgb-savings: 34,197,94;
+  --rgb-warning: 220,38,38;
+  --rgb-amber: 202,138,4;
+
+  /* Primary action button */
+  --btn-primary-bg: rgba(0,0,0,0.9);
+  --btn-primary-text: #fafafa;
 }
 
+.dark {
+  --fg: 255,255,255;
+  --bg-base: #080808;
+  --bg-surface: #0f0f0f;
+  --bg-elevated: #1a1a1a;
+  --color-scheme: dark;
+
+  /* Semantic RGB tuples — dark mode */
+  --rgb-need: 96,165,250;
+  --rgb-want: 167,139,250;
+  --rgb-savings: 74,222,128;
+  --rgb-warning: 248,113,113;
+  --rgb-amber: 251,191,36;
+
+  /* Primary action button */
+  --btn-primary-bg: rgba(255,255,255,0.9);
+  --btn-primary-text: #080808;
+}
+
+/* ── Tailwind @theme tokens (used by shadcn components) ──────────── */
+@theme inline {
+  --color-background: var(--bg-base);
+  --color-surface: var(--bg-surface);
+  --color-foreground: rgba(var(--fg), 0.85);
+  --color-muted: rgba(var(--fg), 0.06);
+  --color-muted-foreground: rgba(var(--fg), 0.55);
+  --color-input: rgba(var(--fg), 0.06);
+  --color-ring: rgba(var(--fg), 0.25);
+  --color-primary: var(--btn-primary-bg);
+  --color-primary-foreground: var(--btn-primary-text);
+  --color-destructive: rgba(var(--rgb-warning), 0.85);
+  --color-destructive-foreground: rgba(var(--fg), 0.9);
+}
+
+/* ── Base styles ─────────────────────────────────────────────────── */
 @layer base {
   *, *::before, *::after {
     box-sizing: border-box;
   }
 
   html {
-    color-scheme: dark;
+    color-scheme: var(--color-scheme);
   }
 
   body {
     margin: 0;
-    background-color: #080808;
-    color: rgba(255,255,255,0.85);
+    background-color: var(--bg-base);
+    color: rgba(var(--fg), 0.85);
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -40,39 +80,38 @@
   }
 
   input[type="date"] {
-    color-scheme: dark;
+    color-scheme: var(--color-scheme);
   }
 
-  /* Tabular nums on all monetary inputs */
   input[type="text"][inputmode="decimal"],
   input[type="number"] {
     font-variant-numeric: tabular-nums;
   }
 }
 
-/* Reusable utility classes for the Premium Calm design */
+/* ── Reusable utility classes ────────────────────────────────────── */
 @layer utilities {
-  .text-primary   { color: rgba(255,255,255,0.93); }
-  .text-strong    { color: rgba(255,255,255,0.85); }
-  .text-default   { color: rgba(255,255,255,0.78); }
-  .text-muted     { color: rgba(255,255,255,0.70); }
-  .text-faint     { color: rgba(255,255,255,0.65); }
-  .text-whisper   { color: rgba(255,255,255,0.55); }
-  .text-barely    { color: rgba(255,255,255,0.50); }
+  .text-primary   { color: rgba(var(--fg), 0.93); }
+  .text-strong    { color: rgba(var(--fg), 0.85); }
+  .text-default   { color: rgba(var(--fg), 0.78); }
+  .text-muted     { color: rgba(var(--fg), 0.70); }
+  .text-faint     { color: rgba(var(--fg), 0.65); }
+  .text-whisper   { color: rgba(var(--fg), 0.55); }
+  .text-barely    { color: rgba(var(--fg), 0.50); }
 
-  .bg-surface     { background-color: #0f0f0f; }
-  .bg-subtle      { background-color: rgba(255,255,255,0.025); }
+  .bg-surface     { background-color: var(--bg-surface); }
+  .bg-subtle      { background-color: rgba(var(--fg), 0.025); }
 
-  .border-hairline { border-color: rgba(255,255,255,0.05); }
-  .border-subtle   { border-color: rgba(255,255,255,0.08); }
-  .divide-hairline > * + * { border-top: 1px solid rgba(255,255,255,0.05); }
+  .border-hairline { border-color: rgba(var(--fg), 0.05); }
+  .border-subtle   { border-color: rgba(var(--fg), 0.08); }
+  .divide-hairline > * + * { border-top: 1px solid rgba(var(--fg), 0.05); }
 
   .section-label {
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.11em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.55);
+    color: rgba(var(--fg), 0.55);
   }
 
   .hero-amount {
@@ -80,7 +119,7 @@
     font-weight: 800;
     letter-spacing: -2.5px;
     line-height: 1;
-    color: rgba(255,255,255,0.93);
+    color: rgba(var(--fg), 0.93);
     font-variant-numeric: tabular-nums;
   }
 

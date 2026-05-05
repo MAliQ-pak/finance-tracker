@@ -12,9 +12,9 @@ import { Shield, Sparkles, PiggyBank } from 'lucide-react'
 import { getIcon } from '@/lib/iconMap'
 
 const TYPE_OPTIONS: { value: ExpenseType; label: string; icon: typeof Shield; color: string }[] = [
-  { value: 'need',    label: 'Need',    icon: Shield,    color: 'rgba(96,165,250,0.75)'  },
-  { value: 'want',    label: 'Want',    icon: Sparkles,  color: 'rgba(167,139,250,0.75)' },
-  { value: 'savings', label: 'Savings', icon: PiggyBank, color: 'rgba(74,222,128,0.75)'  },
+  { value: 'need',    label: 'Need',    icon: Shield,    color: 'rgba(var(--rgb-need),0.75)'  },
+  { value: 'want',    label: 'Want',    icon: Sparkles,  color: 'rgba(var(--rgb-want),0.75)' },
+  { value: 'savings', label: 'Savings', icon: PiggyBank, color: 'rgba(var(--rgb-savings),0.75)'  },
 ]
 
 interface Props {
@@ -85,28 +85,28 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
   return (
     <Sheet open={open} onClose={onClose}>
       <div className="flex flex-col gap-0 pb-8 pt-2 max-h-[88svh] overflow-y-auto">
-        <h2 className="text-[rgba(255,255,255,0.70)] text-xs font-semibold text-center tracking-widest uppercase pb-4 px-6">
+        <h2 className="text-[rgba(var(--fg),0.70)] text-xs font-semibold text-center tracking-widest uppercase pb-4 px-6">
           Edit Expense
         </h2>
 
         {/* Amount */}
-        <div className="flex flex-col items-center py-6 px-6 border-b border-[rgba(255,255,255,0.05)]">
+        <div className="flex flex-col items-center py-6 px-6 border-b border-[rgba(var(--fg),0.05)]">
           <div className="flex items-baseline gap-2">
-            <span className="text-[rgba(255,255,255,0.70)] text-xl font-light">Rs</span>
+            <span className="text-[rgba(var(--fg),0.70)] text-xl font-light">Rs</span>
             <input
               type="text"
               inputMode="decimal"
               value={amount}
               onChange={e => setAmount(e.target.value.replace(/[^\d.]/g, ''))}
               placeholder="0"
-              className="bg-transparent text-[44px] font-[800] text-[rgba(255,255,255,0.93)] outline-none text-center placeholder:text-[rgba(255,255,255,0.1)] tracking-[-2px] tabular min-w-[2ch]"
+              className="bg-transparent text-[44px] font-[800] text-[rgba(var(--fg),0.93)] outline-none text-center placeholder:text-[rgba(var(--fg),0.1)] tracking-[-2px] tabular min-w-[2ch]"
               style={{ width: `${Math.max(2, amount.length + 1)}ch` }}
             />
           </div>
         </div>
 
         {/* Category */}
-        <div className="px-6 pt-5 pb-4 border-b border-[rgba(255,255,255,0.05)]">
+        <div className="px-6 pt-5 pb-4 border-b border-[rgba(var(--fg),0.05)]">
           <p className="section-label mb-3">Category</p>
           <div className="grid grid-cols-2 gap-2">
             {categories.map(cat => {
@@ -119,8 +119,8 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
                   className={cn(
                     'flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-[0.98]',
                     selected
-                      ? 'border-[rgba(255,255,255,0.2)] bg-[rgba(255,255,255,0.05)]'
-                      : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)]'
+                      ? 'border-[rgba(var(--fg),0.2)] bg-[rgba(var(--fg),0.05)]'
+                      : 'border-[rgba(var(--fg),0.06)] bg-[rgba(var(--fg),0.02)]'
                   )}
                 >
                   <div
@@ -129,7 +129,7 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
                   >
                     <Icon size={15} strokeWidth={1.5} style={{ color: selected ? cat.color : `${cat.color}99` }} />
                   </div>
-                  <span className={cn('text-[13px] font-medium', selected ? 'text-[rgba(255,255,255,0.85)]' : 'text-[rgba(255,255,255,0.65)]')}>
+                  <span className={cn('text-[13px] font-medium', selected ? 'text-[rgba(var(--fg),0.85)]' : 'text-[rgba(var(--fg),0.65)]')}>
                     {cat.label}
                   </span>
                 </button>
@@ -139,7 +139,7 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
         </div>
 
         {/* Type */}
-        <div className="px-6 pt-5 pb-4 border-b border-[rgba(255,255,255,0.05)]">
+        <div className="px-6 pt-5 pb-4 border-b border-[rgba(var(--fg),0.05)]">
           <p className="section-label mb-3">Type</p>
           <div className="grid grid-cols-3 gap-2">
             {TYPE_OPTIONS.map(({ value, label, icon: Icon, color }) => {
@@ -151,12 +151,12 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
                   className={cn(
                     'flex flex-col items-center gap-2 py-3 rounded-xl border transition-all active:scale-[0.98]',
                     selected
-                      ? 'border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.05)]'
-                      : 'border-[rgba(255,255,255,0.05)] bg-transparent'
+                      ? 'border-[rgba(var(--fg),0.15)] bg-[rgba(var(--fg),0.05)]'
+                      : 'border-[rgba(var(--fg),0.05)] bg-transparent'
                   )}
                 >
-                  <Icon size={15} strokeWidth={1.5} style={{ color: selected ? color : 'rgba(255,255,255,0.2)' }} />
-                  <span className="text-xs font-medium" style={{ color: selected ? color : 'rgba(255,255,255,0.25)' }}>
+                  <Icon size={15} strokeWidth={1.5} style={{ color: selected ? color : 'rgba(var(--fg),0.2)' }} />
+                  <span className="text-xs font-medium" style={{ color: selected ? color : 'rgba(var(--fg),0.25)' }}>
                     {label}
                   </span>
                 </button>
@@ -167,20 +167,20 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
 
         {/* Goal picker */}
         {expenseType === 'savings' && goals.length > 0 && (
-          <div className="px-6 pt-5 pb-4 border-b border-[rgba(255,255,255,0.05)]">
-            <p className="section-label mb-3">Link to Goal <span className="normal-case font-normal text-[rgba(255,255,255,0.50)]">(optional)</span></p>
+          <div className="px-6 pt-5 pb-4 border-b border-[rgba(var(--fg),0.05)]">
+            <p className="section-label mb-3">Link to Goal <span className="normal-case font-normal text-[rgba(var(--fg),0.50)]">(optional)</span></p>
             <div className="flex flex-col gap-1.5">
               <button
                 onClick={() => setGoalId(null)}
                 className={cn(
                   'flex items-center justify-between px-3 py-2 rounded-xl border text-xs transition-all',
                   goalId === null
-                    ? 'border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.7)]'
-                    : 'border-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.60)]'
+                    ? 'border-[rgba(var(--fg),0.15)] bg-[rgba(var(--fg),0.05)] text-[rgba(var(--fg),0.7)]'
+                    : 'border-[rgba(var(--fg),0.05)] text-[rgba(var(--fg),0.60)]'
                 )}
               >
                 No specific goal
-                {goalId === null && <Check size={11} className="text-[rgba(255,255,255,0.65)]" />}
+                {goalId === null && <Check size={11} className="text-[rgba(var(--fg),0.65)]" />}
               </button>
               {goals.map(g => {
                 const Icon = getIcon(g.icon)
@@ -191,15 +191,15 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
                     className={cn(
                       'flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-xs transition-all',
                       goalId === g.id
-                        ? 'border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.7)]'
-                        : 'border-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.60)]'
+                        ? 'border-[rgba(var(--fg),0.15)] bg-[rgba(var(--fg),0.05)] text-[rgba(var(--fg),0.7)]'
+                        : 'border-[rgba(var(--fg),0.05)] text-[rgba(var(--fg),0.60)]'
                     )}
                   >
                     <div className="flex items-center gap-2">
                       <Icon size={11} style={{ color: g.color }} />
                       {g.name}
                     </div>
-                    {goalId === g.id && <Check size={11} className="text-[rgba(255,255,255,0.65)]" />}
+                    {goalId === g.id && <Check size={11} className="text-[rgba(var(--fg),0.65)]" />}
                   </button>
                 )
               })}
@@ -208,18 +208,18 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
         )}
 
         {/* Date */}
-        <div className="px-6 pt-4 pb-4 border-b border-[rgba(255,255,255,0.05)]">
+        <div className="px-6 pt-4 pb-4 border-b border-[rgba(var(--fg),0.05)]">
           <input
             type="date"
             value={date}
             onChange={e => setDate(e.target.value)}
-            className="w-full bg-transparent border border-[rgba(255,255,255,0.07)] rounded-xl px-4 py-3 text-sm text-[rgba(255,255,255,0.6)] outline-none focus:border-[rgba(255,255,255,0.18)] transition-colors"
+            className="w-full bg-transparent border border-[rgba(var(--fg),0.07)] rounded-xl px-4 py-3 text-sm text-[rgba(var(--fg),0.6)] outline-none focus:border-[rgba(var(--fg),0.18)] transition-colors"
           />
         </div>
 
         {/* Payment method */}
-        <div className="px-6 pt-4 pb-4 border-b border-[rgba(255,255,255,0.05)]">
-          <div className="flex bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.05)] rounded-xl p-1 gap-1 mb-2">
+        <div className="px-6 pt-4 pb-4 border-b border-[rgba(var(--fg),0.05)]">
+          <div className="flex bg-[rgba(var(--fg),0.03)] border border-[rgba(var(--fg),0.05)] rounded-xl p-1 gap-1 mb-2">
             {PRIMARY_METHODS.map(method => (
               <button
                 key={method}
@@ -227,8 +227,8 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
                 className={cn(
                   'flex-1 py-2 rounded-lg text-sm font-medium transition-all',
                   paymentMethod === method
-                    ? 'bg-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.78)]'
-                    : 'text-[rgba(255,255,255,0.70)]'
+                    ? 'bg-[rgba(var(--fg),0.08)] text-[rgba(var(--fg),0.78)]'
+                    : 'text-[rgba(var(--fg),0.70)]'
                 )}
               >
                 {method}
@@ -243,8 +243,8 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
                 className={cn(
                   'py-2 rounded-lg text-xs font-medium border transition-all active:scale-[0.97]',
                   paymentMethod === method
-                    ? 'border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.7)]'
-                    : 'border-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.70)]'
+                    ? 'border-[rgba(var(--fg),0.15)] bg-[rgba(var(--fg),0.06)] text-[rgba(var(--fg),0.7)]'
+                    : 'border-[rgba(var(--fg),0.05)] text-[rgba(var(--fg),0.70)]'
                 )}
               >
                 {method}
@@ -254,13 +254,13 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
         </div>
 
         {/* Note */}
-        <div className="px-6 pt-4 pb-4 border-b border-[rgba(255,255,255,0.05)]">
+        <div className="px-6 pt-4 pb-4 border-b border-[rgba(var(--fg),0.05)]">
           <Textarea
             value={note}
             onChange={e => setNote(e.target.value)}
             placeholder="What was this for?"
             rows={2}
-            className="bg-transparent border-[rgba(255,255,255,0.07)] text-[rgba(255,255,255,0.6)] placeholder:text-[rgba(255,255,255,0.15)] resize-none focus-visible:ring-0 focus-visible:border-[rgba(255,255,255,0.18)] rounded-xl"
+            className="bg-transparent border-[rgba(var(--fg),0.07)] text-[rgba(var(--fg),0.6)] placeholder:text-[rgba(var(--fg),0.15)] resize-none focus-visible:ring-0 focus-visible:border-[rgba(var(--fg),0.18)] rounded-xl"
           />
         </div>
 
@@ -271,8 +271,8 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
             className={cn(
               'flex-1 py-3.5 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]',
               deleteConfirm
-                ? 'bg-[rgba(248,113,113,0.15)] text-[rgba(248,113,113,0.9)] border border-[rgba(248,113,113,0.3)]'
-                : 'border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.60)]'
+                ? 'bg-[rgba(var(--rgb-warning),0.15)] text-[rgba(var(--rgb-warning),0.9)] border border-[rgba(var(--rgb-warning),0.3)]'
+                : 'border border-[rgba(var(--fg),0.06)] text-[rgba(var(--fg),0.60)]'
             )}
           >
             {deleteConfirm ? 'Confirm delete' : 'Delete'}
@@ -280,7 +280,7 @@ export default function EditExpenseSheet({ expense, onClose }: Props) {
           <button
             onClick={handleSave}
             disabled={!canSave || saving}
-            className="flex-1 py-3.5 rounded-xl bg-[rgba(255,255,255,0.9)] text-[#080808] font-semibold text-sm disabled:opacity-25 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
+            className="flex-1 py-3.5 rounded-xl bg-[rgba(var(--fg),0.9)] text-[var(--btn-primary-text)] font-semibold text-sm disabled:opacity-25 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>

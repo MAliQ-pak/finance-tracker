@@ -126,7 +126,7 @@ export default function Insights() {
       target: targets.needs,
       targetPct: splits.needs,
       actualPct: pct(needs, total),
-      color: 'rgba(96,165,250,',
+      color: 'rgba(var(--rgb-need),',
     },
     {
       label: 'Wants',
@@ -134,7 +134,7 @@ export default function Insights() {
       target: targets.wants,
       targetPct: splits.wants,
       actualPct: pct(wants, total),
-      color: 'rgba(167,139,250,',
+      color: 'rgba(var(--rgb-want),',
     },
     {
       label: 'Savings',
@@ -142,7 +142,7 @@ export default function Insights() {
       target: targets.savings,
       targetPct: splits.savings,
       actualPct: pct(savings, total),
-      color: 'rgba(74,222,128,',
+      color: 'rgba(var(--rgb-savings),',
     },
   ]
 
@@ -150,11 +150,11 @@ export default function Insights() {
     <div className="flex flex-col overflow-y-auto pb-8">
       {/* Page header */}
       <div className="flex items-center justify-between px-6 pt-5 pb-0">
-        <p className="text-[rgba(255,255,255,0.85)] text-[20px] font-[700] tracking-[-0.8px]">Insights</p>
+        <p className="text-[rgba(var(--fg),0.85)] text-[20px] font-[700] tracking-[-0.8px]">Insights</p>
         <button
           onClick={handleAIReview}
           disabled={copying}
-          className="flex items-center gap-1.5 text-[rgba(255,255,255,0.60)] text-xs font-medium active:text-[rgba(255,255,255,0.6)] transition-colors disabled:opacity-40"
+          className="flex items-center gap-1.5 text-[rgba(var(--fg),0.60)] text-xs font-medium active:text-[rgba(var(--fg),0.6)] transition-colors disabled:opacity-40"
         >
           <Sparkles size={12} strokeWidth={1.5} />
           {copying ? 'Copying…' : 'AI Review ↗'}
@@ -163,17 +163,17 @@ export default function Insights() {
 
       {/* Month switcher */}
       <div className="flex items-center justify-between px-6 pt-3 pb-0">
-        <button onClick={prevMonth} className="text-[rgba(255,255,255,0.60)] active:text-[rgba(255,255,255,0.6)] p-1">
+        <button onClick={prevMonth} className="text-[rgba(var(--fg),0.60)] active:text-[rgba(var(--fg),0.6)] p-1">
           <ChevronLeft size={16} strokeWidth={1.5} />
         </button>
-        <span className="text-[rgba(255,255,255,0.65)] text-xs font-medium">
+        <span className="text-[rgba(var(--fg),0.65)] text-xs font-medium">
           {MONTH_NAMES[month - 1]} {year}
-          {total > 0 && <span className="ml-2 text-[rgba(255,255,255,0.70)]">· {formatCurrency(total)}</span>}
+          {total > 0 && <span className="ml-2 text-[rgba(var(--fg),0.70)]">· {formatCurrency(total)}</span>}
         </span>
         <button
           onClick={nextMonth}
           disabled={isCurrentMonth}
-          className="text-[rgba(255,255,255,0.60)] active:text-[rgba(255,255,255,0.6)] disabled:opacity-20 p-1"
+          className="text-[rgba(var(--fg),0.60)] active:text-[rgba(var(--fg),0.6)] disabled:opacity-20 p-1"
         >
           <ChevronRight size={16} strokeWidth={1.5} />
         </button>
@@ -181,8 +181,8 @@ export default function Insights() {
 
       {expenses.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 gap-2">
-          <p className="text-[rgba(255,255,255,0.60)] text-sm font-medium">No data for this month</p>
-          <p className="text-[rgba(255,255,255,0.50)] text-xs">Add expenses to see insights</p>
+          <p className="text-[rgba(var(--fg),0.60)] text-sm font-medium">No data for this month</p>
+          <p className="text-[rgba(var(--fg),0.50)] text-xs">Add expenses to see insights</p>
         </div>
       )}
 
@@ -195,7 +195,7 @@ export default function Insights() {
             </div>
             {income === 0 && (
               <div className="px-6 mb-3">
-                <p className="text-[rgba(255,255,255,0.70)] text-xs">Set monthly income in Settings to see targets.</p>
+                <p className="text-[rgba(var(--fg),0.70)] text-xs">Set monthly income in Settings to see targets.</p>
               </div>
             )}
             <div className="flex flex-col">
@@ -205,17 +205,17 @@ export default function Insights() {
                 const pctOfTarget = row.target > 0
                   ? `${row.actualPct}% of ${row.targetPct}%`
                   : `${row.actualPct}% of total`
-                const deltaColor = over ? 'rgba(248,113,113,0.85)' : `${row.color}0.65)`
+                const deltaColor = over ? 'rgba(var(--rgb-warning),0.85)' : `${row.color}0.65)`
 
                 return (
                   <div
                     key={row.label}
-                    className={`px-6 py-4 ${i < budgetRows.length - 1 ? 'border-b border-[rgba(255,255,255,0.05)]' : ''}`}
+                    className={`px-6 py-4 ${i < budgetRows.length - 1 ? 'border-b border-[rgba(var(--fg),0.05)]' : ''}`}
                   >
                     <div className="flex justify-between items-baseline mb-2.5">
-                      <span className="text-[rgba(255,255,255,0.70)] text-[13px] font-medium">{row.label}</span>
+                      <span className="text-[rgba(var(--fg),0.70)] text-[13px] font-medium">{row.label}</span>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-[rgba(255,255,255,0.78)] text-[13px] font-semibold tabular">
+                        <span className="text-[rgba(var(--fg),0.78)] text-[13px] font-semibold tabular">
                           {formatCurrency(row.spent)}
                         </span>
                         <span
@@ -227,12 +227,12 @@ export default function Insights() {
                       </div>
                     </div>
                     {/* 2px progress bar */}
-                    <div className="h-[2px] bg-[rgba(255,255,255,0.05)] rounded-full overflow-hidden">
+                    <div className="h-[2px] bg-[rgba(var(--fg),0.05)] rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
                           width: `${barWidth}%`,
-                          backgroundColor: over ? 'rgba(248,113,113,0.55)' : `${row.color}0.5)`,
+                          backgroundColor: over ? 'rgba(var(--rgb-warning),0.55)' : `${row.color}0.5)`,
                         }}
                       />
                     </div>
@@ -243,7 +243,7 @@ export default function Insights() {
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-[rgba(255,255,255,0.05)]" />
+          <div className="h-px bg-[rgba(var(--fg),0.05)]" />
 
           {/* Top categories */}
           {catChartData.length > 0 && (
@@ -259,7 +259,7 @@ export default function Insights() {
                   return (
                     <div
                       key={cat.name}
-                      className={`flex items-center gap-3 px-6 py-3 ${i < Math.min(catChartData.length, 6) - 1 ? 'border-b border-[rgba(255,255,255,0.04)]' : ''}`}
+                      className={`flex items-center gap-3 px-6 py-3 ${i < Math.min(catChartData.length, 6) - 1 ? 'border-b border-[rgba(var(--fg),0.04)]' : ''}`}
                     >
                       {/* Color bar indicator — varying width */}
                       <div
@@ -270,11 +270,11 @@ export default function Insights() {
                           opacity: 0.6,
                         }}
                       />
-                      <span className="text-[rgba(255,255,255,0.70)] text-[12px] flex-1 truncate">{cat.name}</span>
-                      <span className="text-[rgba(255,255,255,0.7)] text-[12px] font-semibold tabular">
+                      <span className="text-[rgba(var(--fg),0.70)] text-[12px] flex-1 truncate">{cat.name}</span>
+                      <span className="text-[rgba(var(--fg),0.7)] text-[12px] font-semibold tabular">
                         {formatCurrency(cat.value)}
                       </span>
-                      <span className="text-[rgba(255,255,255,0.70)] text-[10px] w-7 text-right tabular">
+                      <span className="text-[rgba(var(--fg),0.70)] text-[10px] w-7 text-right tabular">
                         {share}%
                       </span>
                     </div>
@@ -285,7 +285,7 @@ export default function Insights() {
           )}
 
           {/* Divider */}
-          <div className="h-px bg-[rgba(255,255,255,0.05)]" />
+          <div className="h-px bg-[rgba(var(--fg),0.05)]" />
 
           {/* Notice / Insights */}
           {insights.length > 0 && (
@@ -294,15 +294,15 @@ export default function Insights() {
               <div className="flex flex-col gap-4">
                 {insights.map(card => (
                   <div key={card.id}>
-                    <p className="text-[rgba(255,255,255,0.42)] text-[12px] leading-relaxed">
+                    <p className="text-[rgba(var(--fg),0.42)] text-[12px] leading-relaxed">
                       <span
                         className="font-medium mr-1.5"
                         style={{
                           color: card.severity === 'good'
-                            ? 'rgba(74,222,128,0.65)'
+                            ? 'rgba(var(--rgb-savings),0.65)'
                             : card.severity === 'warn'
-                            ? 'rgba(251,191,36,0.65)'
-                            : 'rgba(255,255,255,0.4)',
+                            ? 'rgba(var(--rgb-amber),0.65)'
+                            : 'rgba(var(--fg),0.4)',
                         }}
                       >
                         {card.title}.
@@ -316,7 +316,7 @@ export default function Insights() {
           )}
 
           {/* Divider */}
-          {insights.length > 0 && <div className="h-px bg-[rgba(255,255,255,0.05)]" />}
+          {insights.length > 0 && <div className="h-px bg-[rgba(var(--fg),0.05)]" />}
 
           {/* Recurring */}
           {recurring.length > 0 && (
@@ -324,7 +324,7 @@ export default function Insights() {
               <div className="px-6 mb-3 flex items-center justify-between">
                 <p className="section-label">Recurring</p>
                 {subscriptions.length > 0 && (
-                  <span className="text-[rgba(255,255,255,0.70)] text-[10px] tabular">
+                  <span className="text-[rgba(var(--fg),0.70)] text-[10px] tabular">
                     {formatCurrency(subscriptionTotal)}/mo
                   </span>
                 )}
@@ -333,22 +333,22 @@ export default function Insights() {
                 {recurring.slice(0, 6).map((item, i) => (
                   <div
                     key={item.key}
-                    className={`flex items-center gap-3 px-6 py-3 ${i < Math.min(recurring.length, 6) - 1 ? 'border-b border-[rgba(255,255,255,0.04)]' : ''}`}
+                    className={`flex items-center gap-3 px-6 py-3 ${i < Math.min(recurring.length, 6) - 1 ? 'border-b border-[rgba(var(--fg),0.04)]' : ''}`}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-[rgba(255,255,255,0.6)] text-[13px] font-medium truncate">{item.note}</p>
-                      <p className="text-[rgba(255,255,255,0.70)] text-[10px]">
+                      <p className="text-[rgba(var(--fg),0.6)] text-[13px] font-medium truncate">{item.note}</p>
+                      <p className="text-[rgba(var(--fg),0.70)] text-[10px]">
                         {item.category}
-                        {item.isSubscription && <span className="ml-1.5 text-[rgba(167,139,250,0.5)]">sub</span>}
+                        {item.isSubscription && <span className="ml-1.5 text-[rgba(var(--rgb-want),0.5)]">sub</span>}
                         {' · '}{item.monthsSeen} months
                       </p>
                     </div>
-                    <span className="text-[rgba(255,255,255,0.65)] text-[12px] font-medium tabular">
+                    <span className="text-[rgba(var(--fg),0.65)] text-[12px] font-medium tabular">
                       {formatCurrency(item.averageAmount)}/mo
                     </span>
                     <button
                       onClick={() => handleIgnoreRecurring(item.key)}
-                      className="text-[rgba(255,255,255,0.15)] hover:text-[rgba(255,255,255,0.35)] transition-colors"
+                      className="text-[rgba(var(--fg),0.15)] hover:text-[rgba(var(--fg),0.35)] transition-colors"
                       title="Not recurring"
                     >
                       <RotateCcw size={11} strokeWidth={1.5} />
@@ -360,7 +360,7 @@ export default function Insights() {
           )}
 
           {/* Divider */}
-          {recurring.length > 0 && <div className="h-px bg-[rgba(255,255,255,0.05)]" />}
+          {recurring.length > 0 && <div className="h-px bg-[rgba(var(--fg),0.05)]" />}
 
           {/* Daily bar chart — minimal */}
           {dailyData.length > 1 && (
@@ -370,7 +370,7 @@ export default function Insights() {
                 <BarChart data={dailyData} barSize={5} barCategoryGap="30%">
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 9, fill: 'rgba(255,255,255,0.18)', fontFamily: 'Inter' }}
+                    tick={{ fontSize: 9, fill: 'rgba(var(--fg),0.18)', fontFamily: 'Inter' }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -378,17 +378,17 @@ export default function Insights() {
                   <Tooltip
                     formatter={(v: any) => [typeof v === 'number' ? formatCurrency(v) : 'Rs 0', '']}
                     contentStyle={{
-                      background: '#111',
-                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: 'var(--bg-surface)',
+                      border: '1px solid rgba(var(--fg),0.08)',
                       borderRadius: 8,
                       fontSize: 11,
                       fontFamily: 'Inter',
                     }}
-                    itemStyle={{ color: 'rgba(255,255,255,0.6)' }}
-                    labelStyle={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}
-                    cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+                    itemStyle={{ color: 'rgba(var(--fg),0.6)' }}
+                    labelStyle={{ color: 'rgba(var(--fg),0.3)', fontSize: 10 }}
+                    cursor={{ fill: 'rgba(var(--fg),0.02)' }}
                   />
-                  <Bar dataKey="amount" fill="rgba(255,255,255,0.15)" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="amount" fill="rgba(var(--fg),0.15)" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -404,20 +404,20 @@ export default function Insights() {
                 {topExpenses.map((e: Expense, i: number) => (
                   <div
                     key={e.id}
-                    className={`flex items-center gap-3 px-6 py-3 ${i < topExpenses.length - 1 ? 'border-b border-[rgba(255,255,255,0.04)]' : ''}`}
+                    className={`flex items-center gap-3 px-6 py-3 ${i < topExpenses.length - 1 ? 'border-b border-[rgba(var(--fg),0.04)]' : ''}`}
                   >
-                    <span className="text-[rgba(255,255,255,0.15)] text-[10px] font-medium w-4 tabular">
+                    <span className="text-[rgba(var(--fg),0.15)] text-[10px] font-medium w-4 tabular">
                       #{i + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[rgba(255,255,255,0.6)] text-[13px] font-medium truncate">{e.category}</p>
-                      {e.note && <p className="text-[rgba(255,255,255,0.70)] text-[10px] truncate">{e.note}</p>}
+                      <p className="text-[rgba(var(--fg),0.6)] text-[13px] font-medium truncate">{e.category}</p>
+                      {e.note && <p className="text-[rgba(var(--fg),0.70)] text-[10px] truncate">{e.note}</p>}
                     </div>
                     <div className="flex flex-col items-end gap-0.5 shrink-0">
-                      <span className="text-[rgba(255,255,255,0.7)] text-[13px] font-semibold tabular">
+                      <span className="text-[rgba(var(--fg),0.7)] text-[13px] font-semibold tabular">
                         {formatCurrency(e.amount)}
                       </span>
-                      <span className="text-[rgba(255,255,255,0.50)] text-[10px]">{e.date.slice(5)}</span>
+                      <span className="text-[rgba(var(--fg),0.50)] text-[10px]">{e.date.slice(5)}</span>
                     </div>
                   </div>
                 ))}
@@ -429,7 +429,7 @@ export default function Insights() {
 
       {/* Toast */}
       {toastMsg && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-[#111] border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.7)] text-xs font-medium px-4 py-3 rounded-xl shadow-xl max-w-[300px] text-center">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-[#111] border border-[rgba(var(--fg),0.08)] text-[rgba(var(--fg),0.7)] text-xs font-medium px-4 py-3 rounded-xl shadow-xl max-w-[300px] text-center">
           {toastMsg}
         </div>
       )}

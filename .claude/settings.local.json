@@ -22,7 +22,8 @@
       "PowerShell($pid5174 = \\(Get-NetTCPConnection -LocalPort 5174 -ErrorAction SilentlyContinue\\).OwningProcess | Select-Object -First 1; if \\($pid5174\\) { Stop-Process -Id $pid5174 -Force; \"killed $pid5174\" } else { \"not found\" })",
       "Bash(git commit *)",
       "Bash(ls src/styles)",
-      "Bash(ls src/lib/)"
+      "Bash(ls src/lib/)",
+      "Bash(grep -n \"rgba\\\\|#[0-9a-f]\\\\{3,6\\\\}\\\\|fill=\\\\|stroke=\" src/pages/Insights.tsx)"
     ]
   }
 }

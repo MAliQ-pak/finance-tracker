@@ -38,7 +38,7 @@ export function Sheet({ open, onClose, children }: SheetProps) {
 
       {/* Panel */}
       <div
-        className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-slate-950 rounded-t-2xl transition-transform duration-300 ease-out ${
+        className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-[var(--bg-surface)] rounded-t-2xl transition-transform duration-300 ease-out ${
           visible ? 'translate-y-0' : 'translate-y-full'
         }`}
         onTouchStart={e => {
@@ -50,7 +50,7 @@ export function Sheet({ open, onClose, children }: SheetProps) {
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-slate-700" />
+          <div className="w-10 h-1 rounded-full bg-[rgba(var(--fg),0.15)]" />
         </div>
         {children}
       </div>

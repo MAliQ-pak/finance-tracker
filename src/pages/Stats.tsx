@@ -17,12 +17,12 @@ function labelYM(ym: string | null): string {
 
 function StatRow({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="flex items-center justify-between px-6 py-3.5 border-b border-[rgba(255,255,255,0.05)]">
+    <div className="flex items-center justify-between px-6 py-3.5 border-b border-[rgba(var(--fg),0.05)]">
       <div>
-        <p className="text-[rgba(255,255,255,0.70)] text-[13px] font-medium">{label}</p>
-        {sub && <p className="text-[rgba(255,255,255,0.70)] text-[11px] mt-0.5">{sub}</p>}
+        <p className="text-[rgba(var(--fg),0.70)] text-[13px] font-medium">{label}</p>
+        {sub && <p className="text-[rgba(var(--fg),0.70)] text-[11px] mt-0.5">{sub}</p>}
       </div>
-      <p className="text-[rgba(255,255,255,0.82)] text-[13px] font-semibold tabular">{value}</p>
+      <p className="text-[rgba(var(--fg),0.82)] text-[13px] font-semibold tabular">{value}</p>
     </div>
   )
 }
@@ -51,23 +51,23 @@ export default function Stats() {
       <div className="flex items-center gap-3 px-6 pt-5 pb-0">
         <button
           onClick={() => navigate('/settings')}
-          className="flex items-center justify-center w-8 h-8 -ml-1 rounded-full text-[rgba(255,255,255,0.60)] active:text-[rgba(255,255,255,0.6)] transition-colors"
+          className="flex items-center justify-center w-8 h-8 -ml-1 rounded-full text-[rgba(var(--fg),0.60)] active:text-[rgba(var(--fg),0.6)] transition-colors"
         >
           <ChevronLeft size={18} strokeWidth={1.5} />
         </button>
-        <p className="text-[rgba(255,255,255,0.85)] text-[20px] font-[700] tracking-[-0.8px]">Lifetime Stats</p>
+        <p className="text-[rgba(var(--fg),0.85)] text-[20px] font-[700] tracking-[-0.8px]">Lifetime Stats</p>
       </div>
 
       {stats.firstEntryDate && (
-        <p className="px-6 pt-2 text-[rgba(255,255,255,0.70)] text-xs">
+        <p className="px-6 pt-2 text-[rgba(var(--fg),0.70)] text-xs">
           Tracking since {stats.firstEntryDate}
         </p>
       )}
 
       {stats.totalExpenses === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-2 text-center px-8">
-          <p className="text-[rgba(255,255,255,0.5)] text-sm font-medium">No data yet</p>
-          <p className="text-[rgba(255,255,255,0.50)] text-xs">Add expenses to see your lifetime stats.</p>
+          <p className="text-[rgba(var(--fg),0.5)] text-sm font-medium">No data yet</p>
+          <p className="text-[rgba(var(--fg),0.50)] text-xs">Add expenses to see your lifetime stats.</p>
         </div>
       ) : (
         <>
@@ -75,7 +75,7 @@ export default function Stats() {
           <div className="px-6 pt-5 pb-0">
             <p className="section-label mb-3">Totals</p>
           </div>
-          <div className="border-t border-[rgba(255,255,255,0.05)]">
+          <div className="border-t border-[rgba(var(--fg),0.05)]">
             <StatRow
               label="Total tracked"
               value={formatCurrency(stats.totalTrackedAmount)}
@@ -92,7 +92,7 @@ export default function Stats() {
           <div className="px-6 pt-5 pb-0">
             <p className="section-label mb-3">Best months</p>
           </div>
-          <div className="border-t border-[rgba(255,255,255,0.05)]">
+          <div className="border-t border-[rgba(var(--fg),0.05)]">
             <StatRow
               label="Biggest savings month"
               value={stats.biggestSavingsMonthAmount > 0 ? formatCurrency(stats.biggestSavingsMonthAmount) : '—'}
@@ -109,7 +109,7 @@ export default function Stats() {
           <div className="px-6 pt-5 pb-0">
             <p className="section-label mb-3">No-spend streaks</p>
           </div>
-          <div className="border-t border-[rgba(255,255,255,0.05)]">
+          <div className="border-t border-[rgba(var(--fg),0.05)]">
             <StatRow
               label="Longest ever"
               value={`${stats.longestNoSpendStreak} day${stats.longestNoSpendStreak !== 1 ? 's' : ''}`}
@@ -129,7 +129,7 @@ export default function Stats() {
               <div className="px-6 pt-5 pb-0">
                 <p className="section-label mb-3">Monthly context</p>
               </div>
-              <div className="border-t border-[rgba(255,255,255,0.05)]">
+              <div className="border-t border-[rgba(var(--fg),0.05)]">
                 <StatRow label="Monthly income" value={formatCurrency(income)} />
                 {avgMonthlySpend !== null && (
                   <StatRow label="Avg monthly spend" value={formatCurrency(avgMonthlySpend)} />
