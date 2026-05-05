@@ -7,6 +7,7 @@ import Settings from './pages/Settings'
 import Goals from './pages/Goals'
 import ManageCategories from './pages/ManageCategories'
 import Stats from './pages/Stats'
+import Wallet from './pages/Wallet'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="add" element={<Add />} />
+          <Route path="wallet" element={<Wallet />} />
           <Route path="insights" element={<Insights />} />
           <Route path="settings" element={<Settings />} />
           <Route path="goals" element={<Goals />} />
