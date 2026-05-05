@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import BottomNav from './BottomNav'
+import WalletRolloverModal from './WalletRolloverModal'
 
 export default function Layout() {
   return (
@@ -10,6 +11,7 @@ export default function Layout() {
         </main>
         <BottomNav />
       </div>
+      <WalletRolloverModal />
     </div>
   )
 }
