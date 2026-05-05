@@ -85,7 +85,7 @@ export default function Add() {
       <div className="flex flex-col items-center gap-1 py-8 px-6">
         <p className="section-label mb-4">Amount</p>
         <div className="flex items-baseline gap-2">
-          <span className="text-[rgba(255,255,255,0.25)] text-2xl font-light">Rs</span>
+          <span className="text-[rgba(255,255,255,0.70)] text-2xl font-light">Rs</span>
           <input
             type="text"
             inputMode="decimal"
@@ -98,7 +98,7 @@ export default function Add() {
           />
         </div>
         {parsedAmount > 0 && (
-          <p className="text-[rgba(255,255,255,0.2)] text-xs tabular mt-1">
+          <p className="text-[rgba(255,255,255,0.50)] text-xs tabular mt-1">
             Rs {parsedAmount.toLocaleString('en-PK')}
           </p>
         )}
@@ -133,7 +133,7 @@ export default function Add() {
                 <span
                   className={cn(
                     'text-[13px] font-medium',
-                    selected ? 'text-[rgba(255,255,255,0.85)]' : 'text-[rgba(255,255,255,0.45)]'
+                    selected ? 'text-[rgba(255,255,255,0.85)]' : 'text-[rgba(255,255,255,0.65)]'
                   )}
                 >
                   {cat.label}
@@ -181,7 +181,7 @@ export default function Add() {
         <>
           <div className="h-px bg-[rgba(255,255,255,0.05)]" />
           <div className="px-6 pt-5 pb-4">
-            <p className="section-label mb-3">Link to Goal <span className="normal-case font-normal text-[rgba(255,255,255,0.18)]">(optional)</span></p>
+            <p className="section-label mb-3">Link to Goal <span className="normal-case font-normal text-[rgba(255,255,255,0.50)]">(optional)</span></p>
             <div className="flex flex-col gap-1.5">
               <button
                 onClick={() => setGoalId(null)}
@@ -189,7 +189,7 @@ export default function Add() {
                   'flex items-center justify-between px-4 py-2.5 rounded-xl border text-xs transition-all text-left',
                   goalId === null
                     ? 'border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.7)]'
-                    : 'border-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.3)]'
+                    : 'border-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.60)]'
                 )}
               >
                 No specific goal
@@ -205,7 +205,7 @@ export default function Add() {
                       'flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl border text-xs transition-all',
                       goalId === g.id
                         ? 'border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.7)]'
-                        : 'border-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.3)]'
+                        : 'border-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.60)]'
                     )}
                   >
                     <div className="flex items-center gap-2">
@@ -249,7 +249,7 @@ export default function Add() {
                 'flex-1 py-2 rounded-lg text-sm font-medium transition-all',
                 paymentMethod === method
                   ? 'bg-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.78)]'
-                  : 'text-[rgba(255,255,255,0.28)]'
+                  : 'text-[rgba(255,255,255,0.70)]'
               )}
             >
               {method}
@@ -266,7 +266,7 @@ export default function Add() {
                 'py-2 rounded-lg text-xs font-medium border transition-all active:scale-[0.97]',
                 paymentMethod === method
                   ? 'border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.7)]'
-                  : 'border-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.25)]'
+                  : 'border-[rgba(255,255,255,0.05)] text-[rgba(255,255,255,0.70)]'
               )}
             >
               {method}

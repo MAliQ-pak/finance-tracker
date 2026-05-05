@@ -19,8 +19,8 @@ function StatRow({ label, value, sub }: { label: string; value: string; sub?: st
   return (
     <div className="flex items-center justify-between px-6 py-3.5 border-b border-[rgba(255,255,255,0.05)]">
       <div>
-        <p className="text-[rgba(255,255,255,0.55)] text-[13px] font-medium">{label}</p>
-        {sub && <p className="text-[rgba(255,255,255,0.25)] text-[11px] mt-0.5">{sub}</p>}
+        <p className="text-[rgba(255,255,255,0.70)] text-[13px] font-medium">{label}</p>
+        {sub && <p className="text-[rgba(255,255,255,0.70)] text-[11px] mt-0.5">{sub}</p>}
       </div>
       <p className="text-[rgba(255,255,255,0.82)] text-[13px] font-semibold tabular">{value}</p>
     </div>
@@ -51,7 +51,7 @@ export default function Stats() {
       <div className="flex items-center gap-3 px-6 pt-5 pb-0">
         <button
           onClick={() => navigate('/settings')}
-          className="flex items-center justify-center w-8 h-8 -ml-1 rounded-full text-[rgba(255,255,255,0.35)] active:text-[rgba(255,255,255,0.6)] transition-colors"
+          className="flex items-center justify-center w-8 h-8 -ml-1 rounded-full text-[rgba(255,255,255,0.60)] active:text-[rgba(255,255,255,0.6)] transition-colors"
         >
           <ChevronLeft size={18} strokeWidth={1.5} />
         </button>
@@ -59,7 +59,7 @@ export default function Stats() {
       </div>
 
       {stats.firstEntryDate && (
-        <p className="px-6 pt-2 text-[rgba(255,255,255,0.25)] text-xs">
+        <p className="px-6 pt-2 text-[rgba(255,255,255,0.70)] text-xs">
           Tracking since {stats.firstEntryDate}
         </p>
       )}
@@ -67,7 +67,7 @@ export default function Stats() {
       {stats.totalExpenses === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-2 text-center px-8">
           <p className="text-[rgba(255,255,255,0.5)] text-sm font-medium">No data yet</p>
-          <p className="text-[rgba(255,255,255,0.2)] text-xs">Add expenses to see your lifetime stats.</p>
+          <p className="text-[rgba(255,255,255,0.50)] text-xs">Add expenses to see your lifetime stats.</p>
         </div>
       ) : (
         <>

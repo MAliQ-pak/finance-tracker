@@ -9,7 +9,20 @@
       "Bash(node -e ' *)",
       "Bash(npx tsc *)",
       "Bash(npm run *)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npx shadcn@latest add button input textarea switch --yes)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(node -e \"const r = require\\('./node_modules/recharts'\\); console.log\\(Object.keys\\(r\\).filter\\(k => ['PieChart','Pie','Cell','BarChart','Bar','XAxis','YAxis','ResponsiveContainer','Tooltip'].includes\\(k\\)\\).join\\(', '\\)\\)\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr :5173)",
+      "Bash(taskkill /PID 2096 /F)",
+      "PowerShell(Stop-Process -Id 2096 -Force)",
+      "PowerShell($pid5174 = \\(Get-NetTCPConnection -LocalPort 5174 -ErrorAction SilentlyContinue\\).OwningProcess | Select-Object -First 1; if \\($pid5174\\) { Stop-Process -Id $pid5174 -Force; \"killed $pid5174\" } else { \"not found\" })",
+      "Bash(git commit *)",
+      "Bash(ls src/styles)",
+      "Bash(ls src/lib/)"
     ]
   }
 }

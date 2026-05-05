@@ -31,7 +31,7 @@ function GoalForm({
 
   return (
     <div className="flex flex-col gap-0 border-t border-[rgba(255,255,255,0.05)]">
-      <h3 className="text-[rgba(255,255,255,0.55)] text-xs font-semibold uppercase tracking-widest text-center py-4 border-b border-[rgba(255,255,255,0.05)]">
+      <h3 className="text-[rgba(255,255,255,0.70)] text-xs font-semibold uppercase tracking-widest text-center py-4 border-b border-[rgba(255,255,255,0.05)]">
         {initial?.name ? 'Edit Goal' : 'New Goal'}
       </h3>
 
@@ -51,7 +51,7 @@ function GoalForm({
       <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
         <p className="section-label mb-2">Target amount</p>
         <div className="flex items-center gap-2 border border-[rgba(255,255,255,0.07)] rounded-xl px-4 py-3 focus-within:border-[rgba(255,255,255,0.18)] transition-colors">
-          <span className="text-[rgba(255,255,255,0.25)] text-sm">Rs</span>
+          <span className="text-[rgba(255,255,255,0.70)] text-sm">Rs</span>
           <input
             type="text"
             inputMode="decimal"
@@ -65,7 +65,7 @@ function GoalForm({
 
       {/* Date */}
       <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
-        <p className="section-label mb-2">Target date <span className="normal-case font-normal text-[rgba(255,255,255,0.18)]">(optional)</span></p>
+        <p className="section-label mb-2">Target date <span className="normal-case font-normal text-[rgba(255,255,255,0.50)]">(optional)</span></p>
         <input
           type="date"
           value={targetDate}
@@ -122,7 +122,7 @@ function GoalForm({
       <div className="flex gap-3 px-6 py-4">
         <button
           onClick={onCancel}
-          className="flex-1 py-3.5 rounded-xl border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.3)] text-sm font-semibold transition-all active:scale-[0.98]"
+          className="flex-1 py-3.5 rounded-xl border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.60)] text-sm font-semibold transition-all active:scale-[0.98]"
         >
           Cancel
         </button>
@@ -178,14 +178,14 @@ function ContributionModal({
         onClick={e => e.stopPropagation()}
       >
         <div className="w-8 h-[3px] bg-[rgba(255,255,255,0.12)] rounded-full mx-auto mt-3 mb-1" />
-        <p className="text-[rgba(255,255,255,0.55)] text-xs font-semibold uppercase tracking-widest text-center py-3 border-b border-[rgba(255,255,255,0.05)]">
+        <p className="text-[rgba(255,255,255,0.70)] text-xs font-semibold uppercase tracking-widest text-center py-3 border-b border-[rgba(255,255,255,0.05)]">
           Contribute to {goal.name}
         </p>
 
         {/* Amount */}
         <div className="flex flex-col items-center py-6 border-b border-[rgba(255,255,255,0.05)]">
           <div className="flex items-baseline gap-2">
-            <span className="text-[rgba(255,255,255,0.25)] text-xl font-light">Rs</span>
+            <span className="text-[rgba(255,255,255,0.70)] text-xl font-light">Rs</span>
             <input
               type="text"
               inputMode="decimal"
@@ -293,7 +293,7 @@ function GoalCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline justify-between gap-2 mb-2">
               <p className="text-[rgba(255,255,255,0.78)] text-[13px] font-medium truncate">{goal.name}</p>
-              <span className="text-[rgba(255,255,255,0.35)] text-[11px] tabular shrink-0">{Math.round(pct)}%</span>
+              <span className="text-[rgba(255,255,255,0.60)] text-[11px] tabular shrink-0">{Math.round(pct)}%</span>
             </div>
             <div className="h-[2px] bg-[rgba(255,255,255,0.05)] rounded-full overflow-hidden mb-2">
               <div
@@ -302,7 +302,7 @@ function GoalCard({
               />
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[rgba(255,255,255,0.3)] text-[11px] tabular">
+              <span className="text-[rgba(255,255,255,0.60)] text-[11px] tabular">
                 {formatCurrency(current)} of {formatCurrency(goal.targetAmount)}
               </span>
               {trackingLabel && (
@@ -311,7 +311,7 @@ function GoalCard({
             </div>
           </div>
 
-          <div className="shrink-0 text-[rgba(255,255,255,0.18)]">
+          <div className="shrink-0 text-[rgba(255,255,255,0.50)]">
             {expanded ? <ChevronUp size={14} strokeWidth={1.5} /> : <ChevronDown size={14} strokeWidth={1.5} />}
           </div>
         </button>
@@ -322,10 +322,10 @@ function GoalCard({
             {(goal.targetDate || monthlyRate > 0) && (
               <div className="px-6 py-3 border-b border-[rgba(255,255,255,0.05)]">
                 {goal.targetDate && (
-                  <p className="text-[rgba(255,255,255,0.3)] text-xs">Target date: {goal.targetDate}</p>
+                  <p className="text-[rgba(255,255,255,0.60)] text-xs">Target date: {goal.targetDate}</p>
                 )}
                 {monthlyRate > 0 && (
-                  <p className="text-[rgba(255,255,255,0.3)] text-xs mt-0.5">
+                  <p className="text-[rgba(255,255,255,0.60)] text-xs mt-0.5">
                     Avg monthly: {formatCurrency(monthlyRate)}
                     {projected && ` · Est. done ${projected.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`}
                   </p>
@@ -341,7 +341,7 @@ function GoalCard({
                 </div>
                 {linkedExpenses.map(e => (
                   <div key={e.id} className="flex justify-between items-center px-6 py-2.5 border-b border-[rgba(255,255,255,0.03)]">
-                    <span className="text-[rgba(255,255,255,0.35)] text-[11px]">{e.date.slice(5)} · {e.note || 'Contribution'}</span>
+                    <span className="text-[rgba(255,255,255,0.60)] text-[11px]">{e.date.slice(5)} · {e.note || 'Contribution'}</span>
                     <span className="text-[rgba(74,222,128,0.7)] text-[11px] font-medium tabular">{formatCurrency(e.amount)}</span>
                   </div>
                 ))}
@@ -358,7 +358,7 @@ function GoalCard({
               </button>
               <button
                 onClick={onEdit}
-                className="flex items-center justify-center w-10 h-10 rounded-xl border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.3)] active:bg-[rgba(255,255,255,0.03)] transition-all"
+                className="flex items-center justify-center w-10 h-10 rounded-xl border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.60)] active:bg-[rgba(255,255,255,0.03)] transition-all"
               >
                 <Edit2 size={13} strokeWidth={1.5} />
               </button>
@@ -371,7 +371,7 @@ function GoalCard({
                   'flex items-center justify-center w-10 h-10 rounded-xl border transition-all active:scale-[0.98]',
                   deleteConfirm
                     ? 'border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.1)] text-[rgba(248,113,113,0.8)]'
-                    : 'border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.25)]'
+                    : 'border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.70)]'
                 )}
               >
                 <Trash2 size={13} strokeWidth={1.5} />
@@ -444,7 +444,7 @@ export default function Goals() {
             <button
               onClick={handleAIAdvice}
               disabled={copying}
-              className="flex items-center gap-1.5 text-[rgba(255,255,255,0.35)] text-xs font-medium disabled:opacity-50 active:text-[rgba(255,255,255,0.55)] transition-colors"
+              className="flex items-center gap-1.5 text-[rgba(255,255,255,0.60)] text-xs font-medium disabled:opacity-50 active:text-[rgba(255,255,255,0.55)] transition-colors"
             >
               <Sparkles size={12} strokeWidth={1.5} />
               {copying ? 'Copying…' : 'AI Advice ↗'}
@@ -467,7 +467,7 @@ export default function Goals() {
         <div className="px-6 pt-5 pb-6">
           <p className="section-label mb-2">Total saved</p>
           <p className="hero-amount">{formatCurrency(totalSaved)}</p>
-          <p className="text-[rgba(255,255,255,0.25)] text-xs mt-1.5">
+          <p className="text-[rgba(255,255,255,0.70)] text-xs mt-1.5">
             across {goals.length} goal{goals.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -498,7 +498,7 @@ export default function Goals() {
           </div>
           <div>
             <p className="text-[rgba(255,255,255,0.6)] text-sm font-medium mb-1.5">Set your first goal</p>
-            <p className="text-[rgba(255,255,255,0.25)] text-xs leading-relaxed">
+            <p className="text-[rgba(255,255,255,0.70)] text-xs leading-relaxed">
               An emergency fund, a gadget, a trip. Start small — every rupee counts.
             </p>
           </div>

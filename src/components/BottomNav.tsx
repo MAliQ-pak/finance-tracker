@@ -22,7 +22,7 @@ function NavItem({
           'flex flex-1 flex-col items-center gap-1 py-1 transition-colors',
           isActive
             ? 'text-[rgba(255,255,255,0.85)]'
-            : 'text-[rgba(255,255,255,0.22)] hover:text-[rgba(255,255,255,0.45)]'
+            : 'text-[rgba(255,255,255,0.70)] hover:text-[rgba(255,255,255,0.45)]'
         )
       }
     >
@@ -49,7 +49,7 @@ export default function BottomNav() {
         >
           <Plus size={20} strokeWidth={2.5} />
         </button>
-        <span className="mt-1 text-[10px] font-medium tracking-wide text-[rgba(255,255,255,0.22)]">Add</span>
+        <span className="mt-1 text-[10px] font-medium tracking-wide text-[rgba(255,255,255,0.70)]">Add</span>
       </div>
 
       <NavItem to="/goals" icon={Target} label="Goals" />

@@ -154,7 +154,7 @@ export default function Insights() {
         <button
           onClick={handleAIReview}
           disabled={copying}
-          className="flex items-center gap-1.5 text-[rgba(255,255,255,0.35)] text-xs font-medium active:text-[rgba(255,255,255,0.6)] transition-colors disabled:opacity-40"
+          className="flex items-center gap-1.5 text-[rgba(255,255,255,0.60)] text-xs font-medium active:text-[rgba(255,255,255,0.6)] transition-colors disabled:opacity-40"
         >
           <Sparkles size={12} strokeWidth={1.5} />
           {copying ? 'Copying…' : 'AI Review ↗'}
@@ -163,17 +163,17 @@ export default function Insights() {
 
       {/* Month switcher */}
       <div className="flex items-center justify-between px-6 pt-3 pb-0">
-        <button onClick={prevMonth} className="text-[rgba(255,255,255,0.3)] active:text-[rgba(255,255,255,0.6)] p-1">
+        <button onClick={prevMonth} className="text-[rgba(255,255,255,0.60)] active:text-[rgba(255,255,255,0.6)] p-1">
           <ChevronLeft size={16} strokeWidth={1.5} />
         </button>
-        <span className="text-[rgba(255,255,255,0.4)] text-xs font-medium">
+        <span className="text-[rgba(255,255,255,0.65)] text-xs font-medium">
           {MONTH_NAMES[month - 1]} {year}
-          {total > 0 && <span className="ml-2 text-[rgba(255,255,255,0.22)]">· {formatCurrency(total)}</span>}
+          {total > 0 && <span className="ml-2 text-[rgba(255,255,255,0.70)]">· {formatCurrency(total)}</span>}
         </span>
         <button
           onClick={nextMonth}
           disabled={isCurrentMonth}
-          className="text-[rgba(255,255,255,0.3)] active:text-[rgba(255,255,255,0.6)] disabled:opacity-20 p-1"
+          className="text-[rgba(255,255,255,0.60)] active:text-[rgba(255,255,255,0.6)] disabled:opacity-20 p-1"
         >
           <ChevronRight size={16} strokeWidth={1.5} />
         </button>
@@ -181,8 +181,8 @@ export default function Insights() {
 
       {expenses.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 gap-2">
-          <p className="text-[rgba(255,255,255,0.35)] text-sm font-medium">No data for this month</p>
-          <p className="text-[rgba(255,255,255,0.18)] text-xs">Add expenses to see insights</p>
+          <p className="text-[rgba(255,255,255,0.60)] text-sm font-medium">No data for this month</p>
+          <p className="text-[rgba(255,255,255,0.50)] text-xs">Add expenses to see insights</p>
         </div>
       )}
 
@@ -195,7 +195,7 @@ export default function Insights() {
             </div>
             {income === 0 && (
               <div className="px-6 mb-3">
-                <p className="text-[rgba(255,255,255,0.22)] text-xs">Set monthly income in Settings to see targets.</p>
+                <p className="text-[rgba(255,255,255,0.70)] text-xs">Set monthly income in Settings to see targets.</p>
               </div>
             )}
             <div className="flex flex-col">
@@ -213,7 +213,7 @@ export default function Insights() {
                     className={`px-6 py-4 ${i < budgetRows.length - 1 ? 'border-b border-[rgba(255,255,255,0.05)]' : ''}`}
                   >
                     <div className="flex justify-between items-baseline mb-2.5">
-                      <span className="text-[rgba(255,255,255,0.55)] text-[13px] font-medium">{row.label}</span>
+                      <span className="text-[rgba(255,255,255,0.70)] text-[13px] font-medium">{row.label}</span>
                       <div className="flex items-baseline gap-2">
                         <span className="text-[rgba(255,255,255,0.78)] text-[13px] font-semibold tabular">
                           {formatCurrency(row.spent)}
@@ -270,11 +270,11 @@ export default function Insights() {
                           opacity: 0.6,
                         }}
                       />
-                      <span className="text-[rgba(255,255,255,0.55)] text-[12px] flex-1 truncate">{cat.name}</span>
+                      <span className="text-[rgba(255,255,255,0.70)] text-[12px] flex-1 truncate">{cat.name}</span>
                       <span className="text-[rgba(255,255,255,0.7)] text-[12px] font-semibold tabular">
                         {formatCurrency(cat.value)}
                       </span>
-                      <span className="text-[rgba(255,255,255,0.22)] text-[10px] w-7 text-right tabular">
+                      <span className="text-[rgba(255,255,255,0.70)] text-[10px] w-7 text-right tabular">
                         {share}%
                       </span>
                     </div>
@@ -324,7 +324,7 @@ export default function Insights() {
               <div className="px-6 mb-3 flex items-center justify-between">
                 <p className="section-label">Recurring</p>
                 {subscriptions.length > 0 && (
-                  <span className="text-[rgba(255,255,255,0.22)] text-[10px] tabular">
+                  <span className="text-[rgba(255,255,255,0.70)] text-[10px] tabular">
                     {formatCurrency(subscriptionTotal)}/mo
                   </span>
                 )}
@@ -337,13 +337,13 @@ export default function Insights() {
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-[rgba(255,255,255,0.6)] text-[13px] font-medium truncate">{item.note}</p>
-                      <p className="text-[rgba(255,255,255,0.22)] text-[10px]">
+                      <p className="text-[rgba(255,255,255,0.70)] text-[10px]">
                         {item.category}
                         {item.isSubscription && <span className="ml-1.5 text-[rgba(167,139,250,0.5)]">sub</span>}
                         {' · '}{item.monthsSeen} months
                       </p>
                     </div>
-                    <span className="text-[rgba(255,255,255,0.45)] text-[12px] font-medium tabular">
+                    <span className="text-[rgba(255,255,255,0.65)] text-[12px] font-medium tabular">
                       {formatCurrency(item.averageAmount)}/mo
                     </span>
                     <button
@@ -411,13 +411,13 @@ export default function Insights() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-[rgba(255,255,255,0.6)] text-[13px] font-medium truncate">{e.category}</p>
-                      {e.note && <p className="text-[rgba(255,255,255,0.22)] text-[10px] truncate">{e.note}</p>}
+                      {e.note && <p className="text-[rgba(255,255,255,0.70)] text-[10px] truncate">{e.note}</p>}
                     </div>
                     <div className="flex flex-col items-end gap-0.5 shrink-0">
                       <span className="text-[rgba(255,255,255,0.7)] text-[13px] font-semibold tabular">
                         {formatCurrency(e.amount)}
                       </span>
-                      <span className="text-[rgba(255,255,255,0.18)] text-[10px]">{e.date.slice(5)}</span>
+                      <span className="text-[rgba(255,255,255,0.50)] text-[10px]">{e.date.slice(5)}</span>
                     </div>
                   </div>
                 ))}

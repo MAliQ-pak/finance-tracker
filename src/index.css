@@ -54,11 +54,11 @@
 @layer utilities {
   .text-primary   { color: rgba(255,255,255,0.93); }
   .text-strong    { color: rgba(255,255,255,0.85); }
-  .text-default   { color: rgba(255,255,255,0.70); }
-  .text-muted     { color: rgba(255,255,255,0.55); }
-  .text-faint     { color: rgba(255,255,255,0.40); }
-  .text-whisper   { color: rgba(255,255,255,0.22); }
-  .text-barely    { color: rgba(255,255,255,0.18); }
+  .text-default   { color: rgba(255,255,255,0.78); }
+  .text-muted     { color: rgba(255,255,255,0.70); }
+  .text-faint     { color: rgba(255,255,255,0.65); }
+  .text-whisper   { color: rgba(255,255,255,0.55); }
+  .text-barely    { color: rgba(255,255,255,0.50); }
 
   .bg-surface     { background-color: #0f0f0f; }
   .bg-subtle      { background-color: rgba(255,255,255,0.025); }
@@ -72,7 +72,7 @@
     font-weight: 600;
     letter-spacing: 0.11em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.22);
+    color: rgba(255,255,255,0.55);
   }
 
   .hero-amount {

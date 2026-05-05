@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Direction 3 — Data-Forward Minimal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+  * { box-sizing: border-box; }
+  body { background: #050505; min-height: 100vh; font-family: 'Inter', sans-serif; }
+
+  .mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+
+  .phone-frame {
+    width: 375px;
+    background: #080808;
+    border-radius: 44px;
+    border: 1px solid #1c1c1c;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px #000,
+      0 40px 100px rgba(0,0,0,0.95);
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 28px 0;
+    height: 44px;
+    border-bottom: 1px solid #111;
+  }
+
+  .home-indicator {
+    width: 100px;
+    height: 3px;
+    background: #1a1a1a;
+    border-radius: 2px;
+    margin: 10px auto 12px;
+  }
+
+  .tab-bar {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid #111;
+    padding: 10px 0 4px;
+    background: #080808;
+  }
+
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 400;
+    color: #2a2a2a;
+    letter-spacing: 0.02em;
+  }
+
+  .tab-item.active { color: #e5e5e5; }
+
+  .add-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid #2a2a2a;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -12px;
+  }
+
+  /* Hairline borders everywhere */
+  .hl { border: 1px solid #141414; }
+  .hl-top { border-top: 1px solid #111; }
+  .hl-bottom { border-bottom: 1px solid #111; }
+
+  .data-row {
+    display: flex;
+    align-items: center;
+    padding: 9px 20px;
+    border-bottom: 1px solid #0f0f0f;
+  }
+
+  .amount-primary {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -2px;
+    color: #e8e8e8;
+    line-height: 1;
+  }
+
+  .label-xs {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #2a2a2a;
+  }
+
+  .value-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: #666;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .value-mono-bright {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: #c0c0c0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Inline bar for data viz */
+  .inline-bar {
+    height: 1px;
+    border-radius: 100px;
+    display: inline-block;
+  }
+
+  /* Sparkline-style mini chart */
+  .chart-area {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 36px;
+    padding: 0 20px;
+  }
+
+  .chart-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+    gap: 2px;
+  }
+
+  .chart-bar {
+    width: 100%;
+    border-radius: 1px 1px 0 0;
+    background: #1e1e1e;
+  }
+
+  .chart-bar.active { background: #3a3a3a; }
+  .chart-bar.highlight { background: #606060; }
+
+  .chart-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7px;
+    color: #222;
+  }
+
+  /* Tag pill — minimal, monospace */
+  .mtag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 2px 5px;
+    border: 1px solid;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+    display: inline-block;
+  }
+
+  /* Horizontal rule with label */
+  .section-rule {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-top: 1px solid #0e0e0e;
+    border-bottom: 1px solid #0e0e0e;
+    background: #050505;
+  }
+
+  /* Progress bar */
+  .pbar-track {
+    height: 1px;
+    background: #141414;
+    border-radius: 100px;
+    overflow: visible;
+    position: relative;
+  }
+
+  .pbar-fill {
+    height: 1px;
+    border-radius: 100px;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+</style>
+</head>
+<body>
+
+<div style="padding: 48px 32px;">
+  <!-- Philosophy -->
+  <div style="max-width: 1300px; margin: 0 auto 48px;">
+    <div style="background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 12px; padding: 24px 28px;">
+      <h1 style="color: #444; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px;">Direction 3 — Data-Forward Minimal</h1>
+      <p style="color: #444; font-size: 15px; line-height: 1.65; margin: 0; font-family: 'Inter', sans-serif;">
+        Inspired by Bloomberg Terminal, Robinhood Pro, and Notion tables. This direction treats the app as a <strong style="color:#666;">financial instrument, not a lifestyle product</strong> — near-black canvas, JetBrains Mono for all numbers (tabular, precise, machine-readable), hairline 1px borders as the only decoration. Color is used with extreme discipline: green only for on-track/positive delta, red only for over-budget, everything else is greyscale. Charts are the hero — they live full-bleed and take the most space. The UI gets out of your way and lets the data speak. Feels like you built it yourself.
+      </p>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 40px; align-items: flex-start; max-width: 1300px; margin: 0 auto; flex-wrap: wrap;">
+
+    <!-- === HOME === -->
+    <div>
+      <p style="color: #1e1e1e; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; text-align: center; margin-bottom: 16px;">HOME</p>
+      <div class="phone-frame">
+        <div class="status-bar">
+          <span class="mono" style="color: #333; font-size: 11px; font-weight: 500;">09:41</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <span class="mono" style="color:#2a2a2a; font-size:10px;">PKT</span>
+            <div style="width:20px; height:9px; border:1px solid #222; border-radius:2px; display:flex; align-items:center; padding:1px;">
+              <div style="width:12px; height:6px; background:#2a2a2a; border-radius:1px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Header row -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 20px; border-bottom:1px solid #0f0f0f;">
+          <span class="label-xs">MAY_2026</span>
+          <span class="label-xs" style="color:#1e1e1e;">⚙</span>
+        </div>
+
+        <!-- Hero block -->
+        <div style="padding:16px 20px 14px; border-bottom:1px solid #0f0f0f;">
+          <span class="label-xs" style="display:block; margin-bottom:6px;">TOTAL_SPENT</span>
+          <div class="amount-primary">71,343</div>
+          <span class="mono" style="color:#222; font-size:10px; display:block; margin-top:3px;">Rs · 24 transactions · May 2026</span>
+
+          <!-- Three-column data grid -->
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; margin-top:14px; border:1px solid #111; border-radius:4px; overflow:hidden;">
+            <div style="padding:8px 10px; border-right:1px solid #111;">
+              <span class="label-xs" style="display:block; color:#1a8a5a; margin-bottom:4px;">NEEDS</span>
+              <span class="mono" style="color:#3aaa7a; font-size:13px; font-weight:600; display:block;">47%</span>
+              <span class="mono" style="color:#1a3a2a; font-size:9px; display:block;">50% target</span>
+            </div>
+            <div style="padding:8px 10px; border-right:1px solid #111;">
+              <span class="label-xs" style="display:block; color:#8a3a2a; margin-bottom:4px;">WANTS</span>
+              <span class="mono" style="color:#cc5533; font-size:13px; font-weight:600; display:block;">34%</span>
+              <span class="mono" style="color:#3a1a12; font-size:9px; display:block;">30% target ↑</span>
+            </div>
+            <div style="padding:8px 10px;">
+              <span class="label-xs" style="display:block; color:#1a3a6a; margin-bottom:4px;">SAVINGS</span>
+              <span class="mono" style="color:#3a7acc; font-size:13px; font-weight:600; display:block;">19%</span>
+              <span class="mono" style="color:#0e1e30; font-size:9px; display:block;">20% target</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Streak row -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:7px 20px; border-bottom:1px solid #0f0f0f;">
+          <span class="label-xs">STREAK</span>
+          <span class="mono" style="color:#2a6a3a; font-size:11px;">NO_SPEND · 003d</span>
+        </div>
+
+        <!-- Transactions -->
+        <div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:7px 20px; border-bottom:1px solid #0f0f0f; background:#050505;">
+            <span class="label-xs">TRANSACTIONS · TODAY</span>
+            <span class="label-xs" style="color:#181818;">3 entries</span>
+          </div>
+
+          <!-- Row -->
+          <div class="data-row">
+            <div style="width:6px; height:6px; border-radius:1px; background:#1a5a3a; margin-right:12px; flex-shrink:0;"></div>
+            <div style="flex:1; min-width:0;">
+              <span class="mono" style="color:#555; font-size:11px; display:block;">GROCERIES</span>
+              <span class="mono" style="color:#222; font-size:9px;">card · need</span>
+            </div>
+            <span class="mono" style="color:#888; font-size:12px; font-weight:500;">2,400</span>
+          </div>
+
+          <div class="data-row">
+            <div style="width:6px; height:6px; border-radius:1px; background:#3a1a5a; margin-right:12px; flex-shrink:0;"></div>
+            <div style="flex:1; min-width:0;">
+              <span class="mono" style="color:#555; font-size:11px; display:block;">ENTERTAINMENT</span>
+              <span class="mono" style="color:#222; font-size:9px;">netflix · want</span>
+            </div>
+            <span class="mono" style="color:#888; font-size:12px; font-weight:500;">650</span>
+          </div>
+
+          <div class="data-row" style="border-bottom:none;">
+            <div style="width:6px; height:6px; border-radius:1px; background:#1a2a5a; margin-right:12px; flex-shrink:0;"></div>
+            <div style="flex:1; min-width:0;">
+              <span class="mono" style="color:#555; font-size:11px; display:block;">INVESTMENT</span>
+              <span class="mono" style="color:#222; font-size:9px;">emerg fund · savings</span>
+            </div>
+            <span class="mono" style="color:#888; font-size:12px; font-weight:500;">5,000</span>
+          </div>
+        </div>
+
+        <div class="tab-bar">
+          <div class="tab-item active">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            HOME
+          </div>
+          <div class="tab-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            DATA
+          </div>
+          <div class="tab-item">
+            <div class="add-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+            <span style="margin-top:5px;">ADD</span>
+          </div>
+          <div class="tab-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            GOALS
+          </div>
+          <div class="tab-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            MORE
+          </div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+
+    <!-- === INSIGHTS/DATA === -->
+    <div>
+      <p style="color: #1e1e1e; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; text-align: center; margin-bottom: 16px;">DATA</p>
+      <div class="phone-frame">
+        <div class="status-bar">
+          <span class="mono" style="color: #333; font-size: 11px; font-weight: 500;">09:41</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <span class="mono" style="color:#2a2a2a; font-size:10px;">PKT</span>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 20px; border-bottom:1px solid #0f0f0f;">
+          <span class="label-xs">DATA_VIEW · MAY_2026</span>
+          <span class="mono" style="color:#2a2a2a; font-size:10px; border:1px solid #1a1a1a; padding:2px 6px; border-radius:3px;">AI ↗</span>
+        </div>
+
+        <!-- Chart hero — full bleed bar chart -->
+        <div style="padding:12px 20px 6px; border-bottom:1px solid #0f0f0f;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+            <span class="label-xs">DAILY_SPEND · Rs</span>
+            <span class="mono" style="color:#333; font-size:9px;">last 14d</span>
+          </div>
+          <div style="display:flex; align-items:flex-end; gap:2px; height:48px;">
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#181818; height:30%; border-radius:1px 1px 0 0;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#1e1e1e; height:65%; border-radius:1px 1px 0 0;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#181818; height:40%; border-radius:1px 1px 0 0;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#1e1e1e; height:80%; border-radius:1px 1px 0 0;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#1a1a1a; height:20%; border-radius:1px 1px 0 0;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#1e1e1e; height:55%; border-radius:1px 1px 0 0;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#262626; height:90%; border-radius:1px 1px 0 0; box-shadow:0 0 4px #333;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#1e1e1e; height:45%; border-radius:1px 1px 0 0;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#1e1e1e; height:60%; border-radius:1px 1px 0 0;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#181818; height:30%; border-radius:1px 1px 0 0;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#1a1a1a; height:15%; border-radius:1px 1px 0 0;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#1e1e1e; height:70%; border-radius:1px 1px 0 0;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#181818; height:35%; border-radius:1px 1px 0 0;"></div></div>
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%;"><div style="background:#1a1a1a; height:50%; border-radius:1px 1px 0 0;"></div></div>
+          </div>
+          <!-- axis -->
+          <div style="height:1px; background:#111; margin-top:0;"></div>
+        </div>
+
+        <!-- Budget table -->
+        <div style="border-bottom:1px solid #0f0f0f;">
+          <div style="display:flex; align-items:center; padding:7px 20px; background:#050505; border-bottom:1px solid #0f0f0f;">
+            <span class="label-xs" style="flex:2;">CATEGORY</span>
+            <span class="label-xs" style="flex:1; text-align:right;">ACTUAL</span>
+            <span class="label-xs" style="flex:1; text-align:right;">TARGET</span>
+            <span class="label-xs" style="flex:1; text-align:right;">DELTA</span>
+          </div>
+          <div style="display:flex; align-items:center; padding:8px 20px; border-bottom:1px solid #0a0a0a;">
+            <div style="flex:2; display:flex; align-items:center; gap:6px;">
+              <div style="width:4px; height:4px; background:#1a5a3a; border-radius:1px; flex-shrink:0;"></div>
+              <span class="mono" style="color:#3a3a3a; font-size:11px;">NEEDS</span>
+            </div>
+            <span class="mono" style="flex:1; color:#555; font-size:11px; text-align:right;">33,511</span>
+            <span class="mono" style="flex:1; color:#2a2a2a; font-size:11px; text-align:right;">35,671</span>
+            <span class="mono" style="flex:1; color:#1a5a3a; font-size:11px; text-align:right;">+2,160</span>
+          </div>
+          <div style="display:flex; align-items:center; padding:8px 20px; border-bottom:1px solid #0a0a0a; background:#0e0806;">
+            <div style="flex:2; display:flex; align-items:center; gap:6px;">
+              <div style="width:4px; height:4px; background:#5a1a0a; border-radius:1px; flex-shrink:0;"></div>
+              <span class="mono" style="color:#3a3a3a; font-size:11px;">WANTS</span>
+            </div>
+            <span class="mono" style="flex:1; color:#555; font-size:11px; text-align:right;">24,257</span>
+            <span class="mono" style="flex:1; color:#2a2a2a; font-size:11px; text-align:right;">21,403</span>
+            <span class="mono" style="flex:1; color:#cc4422; font-size:11px; text-align:right;">-2,854</span>
+          </div>
+          <div style="display:flex; align-items:center; padding:8px 20px;">
+            <div style="flex:2; display:flex; align-items:center; gap:6px;">
+              <div style="width:4px; height:4px; background:#0a2a5a; border-radius:1px; flex-shrink:0;"></div>
+              <span class="mono" style="color:#3a3a3a; font-size:11px;">SAVINGS</span>
+            </div>
+            <span class="mono" style="flex:1; color:#555; font-size:11px; text-align:right;">13,500</span>
+            <span class="mono" style="flex:1; color:#2a2a2a; font-size:11px; text-align:right;">14,269</span>
+            <span class="mono" style="flex:1; color:#1a4a6a; font-size:11px; text-align:right;">+769</span>
+          </div>
+        </div>
+
+        <!-- Top categories table -->
+        <div style="border-bottom:1px solid #0f0f0f;">
+          <div style="display:flex; align-items:center; padding:7px 20px; background:#050505; border-bottom:1px solid #0f0f0f;">
+            <span class="label-xs" style="flex:1;">TOP_CATEGORIES</span>
+            <span class="label-xs" style="text-align:right;">AMT · SHARE</span>
+          </div>
+          <div style="display:flex; align-items:center; padding:7px 20px; border-bottom:1px solid #0a0a0a; gap:8px;">
+            <span class="mono" style="color:#2a2a2a; font-size:9px; width:16px;">01</span>
+            <span class="mono" style="color:#3a3a3a; font-size:11px; flex:1;">groceries</span>
+            <div style="width:40px; height:1px; background:#1a3a2a; border-radius:1px; margin-right:6px;"></div>
+            <span class="mono" style="color:#555; font-size:11px; text-align:right;">18,200 · 26%</span>
+          </div>
+          <div style="display:flex; align-items:center; padding:7px 20px; border-bottom:1px solid #0a0a0a; gap:8px;">
+            <span class="mono" style="color:#2a2a2a; font-size:9px; width:16px;">02</span>
+            <span class="mono" style="color:#3a3a3a; font-size:11px; flex:1;">transport</span>
+            <div style="width:28px; height:1px; background:#2a1a4a; border-radius:1px; margin-right:6px;"></div>
+            <span class="mono" style="color:#555; font-size:11px; text-align:right;">12,400 · 17%</span>
+          </div>
+          <div style="display:flex; align-items:center; padding:7px 20px; gap:8px;">
+            <span class="mono" style="color:#2a2a2a; font-size:9px; width:16px;">03</span>
+            <span class="mono" style="color:#3a3a3a; font-size:11px; flex:1;">food</span>
+            <div style="width:18px; height:1px; background:#3a2a1a; border-radius:1px; margin-right:6px;"></div>
+            <span class="mono" style="color:#555; font-size:11px; text-align:right;">9,100 · 13%</span>
+          </div>
+        </div>
+
+        <!-- Alert row -->
+        <div style="padding:10px 20px; background:#0c0800; border-bottom:1px solid #0f0f0f;">
+          <div style="display:flex; align-items:flex-start; gap:8px;">
+            <span class="mono" style="color:#cc4422; font-size:9px; letter-spacing:0.1em; margin-top:1px;">ALERT</span>
+            <span class="mono" style="color:#4a2a1a; font-size:10px; line-height:1.5;">wants over by Rs 2,854 · proj. month-end Rs 85,000 (+13,657 vs target)</span>
+          </div>
+        </div>
+
+        <!-- Recurring -->
+        <div style="padding:7px 20px; background:#050505; border-bottom:1px solid #0f0f0f;">
+          <span class="label-xs">RECURRING_DETECTED</span>
+        </div>
+        <div style="display:flex; align-items:center; padding:7px 20px; border-bottom:1px solid #0a0a0a; gap:8px;">
+          <span class="mono" style="color:#333; font-size:9px; letter-spacing:0.06em; border:1px solid #1a1a1a; padding:1px 4px; border-radius:2px; flex-shrink:0;">SUB</span>
+          <span class="mono" style="color:#2a2a2a; font-size:11px; flex:1;">netflix · entertainment</span>
+          <span class="mono" style="color:#333; font-size:11px;">650/mo</span>
+        </div>
+        <div style="display:flex; align-items:center; padding:7px 20px; gap:8px;">
+          <span class="mono" style="color:#333; font-size:9px; letter-spacing:0.06em; border:1px solid #1a1a1a; padding:1px 4px; border-radius:2px; flex-shrink:0;">REC</span>
+          <span class="mono" style="color:#2a2a2a; font-size:11px; flex:1;">gym · health</span>
+          <span class="mono" style="color:#333; font-size:11px;">2,500/mo</span>
+        </div>
+
+        <div class="tab-bar">
+          <div class="tab-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>HOME</div>
+          <div class="tab-item active"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>DATA</div>
+          <div class="tab-item"><div class="add-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><span style="margin-top:5px;">ADD</span></div>
+          <div class="tab-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>GOALS</div>
+          <div class="tab-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>MORE</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+
+    <!-- === GOALS === -->
+    <div>
+      <p style="color: #1e1e1e; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; text-align: center; margin-bottom: 16px;">GOALS</p>
+      <div class="phone-frame">
+        <div class="status-bar">
+          <span class="mono" style="color: #333; font-size: 11px; font-weight: 500;">09:41</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <span class="mono" style="color:#2a2a2a; font-size:10px;">PKT</span>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 20px; border-bottom:1px solid #0f0f0f;">
+          <span class="label-xs">GOALS</span>
+          <span class="mono" style="color:#2a2a2a; font-size:10px; border:1px solid #1a1a1a; padding:2px 6px; border-radius:3px; cursor:pointer;">+ NEW</span>
+        </div>
+
+        <!-- Summary header -->
+        <div style="padding:14px 20px; border-bottom:1px solid #0f0f0f;">
+          <span class="label-xs" style="display:block; margin-bottom:5px;">TOTAL_SAVED</span>
+          <span class="mono" style="color:#555; font-size:32px; font-weight:600; letter-spacing:-1px; display:block; line-height:1;">47,500</span>
+          <span class="mono" style="color:#1e1e1e; font-size:10px; display:block; margin-top:3px;">Rs · 2 active goals</span>
+        </div>
+
+        <!-- Goal 1 -->
+        <div style="border-bottom:1px solid #0f0f0f;">
+          <div style="padding:10px 20px 0;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px;">
+              <span class="mono" style="color:#444; font-size:11px; font-weight:600;">new_laptop</span>
+              <span class="mono" style="color:#1a5a3a; font-size:11px;">on_track</span>
+            </div>
+            <!-- Progress bar -->
+            <div style="height:1px; background:#0e0e0e; border-radius:100px; margin-bottom:5px; position:relative; overflow:visible;">
+              <div style="position:absolute; top:0; left:0; height:1px; width:58%; background:#2a4a3a; border-radius:100px;"></div>
+              <div style="position:absolute; top:-3px; left:58%; width:1px; height:7px; background:#3a6a4a;"></div>
+            </div>
+            <!-- Data grid -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; border:1px solid #0e0e0e; border-radius:3px; margin-bottom:10px; overflow:hidden;">
+              <div style="padding:6px 8px; border-right:1px solid #0e0e0e;">
+                <span class="label-xs" style="color:#1a1a1a; display:block; margin-bottom:2px;">SAVED</span>
+                <span class="mono" style="color:#333; font-size:10px;">34,800</span>
+              </div>
+              <div style="padding:6px 8px; border-right:1px solid #0e0e0e;">
+                <span class="label-xs" style="color:#1a1a1a; display:block; margin-bottom:2px;">TARGET</span>
+                <span class="mono" style="color:#333; font-size:10px;">60,000</span>
+              </div>
+              <div style="padding:6px 8px;">
+                <span class="label-xs" style="color:#1a1a1a; display:block; margin-bottom:2px;">ETA</span>
+                <span class="mono" style="color:#1a4a2a; font-size:10px;">DEC_26</span>
+              </div>
+            </div>
+          </div>
+          <!-- Contribution row -->
+          <div style="display:flex; align-items:center; padding:7px 20px; background:#050505; border-top:1px solid #0a0a0a;">
+            <span class="mono" style="color:#1e1e1e; font-size:10px; flex:1;">rate: 8,700/mo · 58% complete</span>
+            <span class="mono" style="color:#1a2a1a; font-size:10px; border:1px solid #111; padding:2px 7px; border-radius:3px;">+ ADD</span>
+          </div>
+        </div>
+
+        <!-- Goal 2 -->
+        <div style="border-bottom:1px solid #0f0f0f;">
+          <div style="padding:10px 20px 0;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px;">
+              <span class="mono" style="color:#444; font-size:11px; font-weight:600;">emergency_fund</span>
+              <span class="mono" style="color:#8a3a1a; font-size:11px;">behind</span>
+            </div>
+            <div style="height:1px; background:#0e0e0e; border-radius:100px; margin-bottom:5px; position:relative; overflow:visible;">
+              <div style="position:absolute; top:0; left:0; height:1px; width:25%; background:#3a2a1a; border-radius:100px;"></div>
+              <div style="position:absolute; top:-3px; left:25%; width:1px; height:7px; background:#5a3a1a;"></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; border:1px solid #0e0e0e; border-radius:3px; margin-bottom:10px; overflow:hidden;">
+              <div style="padding:6px 8px; border-right:1px solid #0e0e0e;">
+                <span class="label-xs" style="color:#1a1a1a; display:block; margin-bottom:2px;">SAVED</span>
+                <span class="mono" style="color:#333; font-size:10px;">12,500</span>
+              </div>
+              <div style="padding:6px 8px; border-right:1px solid #0e0e0e;">
+                <span class="label-xs" style="color:#1a1a1a; display:block; margin-bottom:2px;">TARGET</span>
+                <span class="mono" style="color:#333; font-size:10px;">50,000</span>
+              </div>
+              <div style="padding:6px 8px;">
+                <span class="label-xs" style="color:#1a1a1a; display:block; margin-bottom:2px;">ETA</span>
+                <span class="mono" style="color:#4a2a0a; font-size:10px;">JUN_27↑</span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; padding:7px 20px; background:#050505; border-top:1px solid #0a0a0a;">
+            <span class="mono" style="color:#1e1e1e; font-size:10px; flex:1;">rate: 6,250/mo · need +2K/mo for MAR_27</span>
+            <span class="mono" style="color:#1a1a12; font-size:10px; border:1px solid #111; padding:2px 7px; border-radius:3px;">+ ADD</span>
+          </div>
+        </div>
+
+        <!-- AI advice row -->
+        <div style="padding:10px 20px; background:#080804;">
+          <div style="display:flex; align-items:flex-start; gap:8px;">
+            <span class="mono" style="color:#3a3a22; font-size:9px; letter-spacing:0.1em; margin-top:1px; flex-shrink:0;">AI</span>
+            <span class="mono" style="color:#2a2a18; font-size:10px; line-height:1.6;">laptop goal: on track. emergency fund: increase contributions by Rs 2,000/mo to hit MAR_2027 deadline. <span style="color:#3a3a1a; border-bottom:1px solid #2a2a10; cursor:pointer;">copy_prompt ↗</span></span>
+          </div>
+        </div>
+
+        <div class="tab-bar">
+          <div class="tab-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>HOME</div>
+          <div class="tab-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>DATA</div>
+          <div class="tab-item"><div class="add-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><span style="margin-top:5px;">ADD</span></div>
+          <div class="tab-item active"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>GOALS</div>
+          <div class="tab-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>MORE</div>
+        </div>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

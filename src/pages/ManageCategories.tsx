@@ -34,7 +34,7 @@ function CategoryForm({
 
   return (
     <div className="border-t border-[rgba(255,255,255,0.05)]">
-      <h3 className="text-[rgba(255,255,255,0.55)] text-xs font-semibold uppercase tracking-widest text-center py-4 border-b border-[rgba(255,255,255,0.05)]">
+      <h3 className="text-[rgba(255,255,255,0.70)] text-xs font-semibold uppercase tracking-widest text-center py-4 border-b border-[rgba(255,255,255,0.05)]">
         {initial?.label ? 'Edit Category' : 'New Category'}
       </h3>
 
@@ -109,7 +109,7 @@ function CategoryForm({
       <div className="flex gap-3 px-6 py-4">
         <button
           onClick={onCancel}
-          className="flex-1 py-3.5 rounded-xl border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.3)] text-sm font-semibold transition-all active:scale-[0.98]"
+          className="flex-1 py-3.5 rounded-xl border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.60)] text-sm font-semibold transition-all active:scale-[0.98]"
         >
           Cancel
         </button>
@@ -187,14 +187,14 @@ function CategoryRow({
         <button
           onClick={onMoveUp}
           disabled={isFirst}
-          className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.2)] disabled:opacity-20 active:text-[rgba(255,255,255,0.5)]"
+          className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.50)] disabled:opacity-20 active:text-[rgba(255,255,255,0.5)]"
         >
           <ChevronUp size={13} strokeWidth={1.5} />
         </button>
         <button
           onClick={onMoveDown}
           disabled={isLast}
-          className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.2)] disabled:opacity-20 active:text-[rgba(255,255,255,0.5)]"
+          className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.50)] disabled:opacity-20 active:text-[rgba(255,255,255,0.5)]"
         >
           <ChevronDown size={13} strokeWidth={1.5} />
         </button>
@@ -206,13 +206,13 @@ function CategoryRow({
                 if (renaming) handleRename()
                 else { setRenaming(true); setNewName(cat.label) }
               }}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.25)] active:text-[rgba(255,255,255,0.5)]"
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.70)] active:text-[rgba(255,255,255,0.5)]"
             >
               {renaming ? <Check size={12} strokeWidth={2} className="text-[rgba(74,222,128,0.7)]" /> : <Edit2 size={12} strokeWidth={1.5} />}
             </button>
             <button
               onClick={() => onEdit()}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.25)] active:text-[rgba(255,255,255,0.5)]"
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.70)] active:text-[rgba(255,255,255,0.5)]"
             >
               <Edit2 size={12} strokeWidth={1.5} />
             </button>
@@ -223,7 +223,7 @@ function CategoryRow({
               }}
               className={cn(
                 'flex items-center justify-center w-7 h-7 rounded-lg transition-all',
-                deleteConfirm ? 'text-[rgba(248,113,113,0.8)]' : 'text-[rgba(255,255,255,0.2)] active:text-[rgba(248,113,113,0.6)]'
+                deleteConfirm ? 'text-[rgba(248,113,113,0.8)]' : 'text-[rgba(255,255,255,0.50)] active:text-[rgba(248,113,113,0.6)]'
               )}
             >
               <Trash2 size={12} strokeWidth={1.5} />
@@ -266,7 +266,7 @@ export default function ManageCategories() {
       <div className="flex items-center gap-3 px-6 pt-5 pb-0">
         <button
           onClick={() => navigate('/settings')}
-          className="flex items-center justify-center w-8 h-8 -ml-1 rounded-full text-[rgba(255,255,255,0.35)] active:text-[rgba(255,255,255,0.6)] transition-colors"
+          className="flex items-center justify-center w-8 h-8 -ml-1 rounded-full text-[rgba(255,255,255,0.60)] active:text-[rgba(255,255,255,0.6)] transition-colors"
         >
           <ChevronLeft size={18} strokeWidth={1.5} />
         </button>
@@ -282,7 +282,7 @@ export default function ManageCategories() {
         )}
       </div>
 
-      <p className="px-6 pt-2 pb-5 text-[rgba(255,255,255,0.2)] text-xs leading-relaxed">
+      <p className="px-6 pt-2 pb-5 text-[rgba(255,255,255,0.50)] text-xs leading-relaxed">
         Default categories can be reordered. Only custom categories can be renamed or deleted.
       </p>
 

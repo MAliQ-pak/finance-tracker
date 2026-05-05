@@ -111,7 +111,7 @@ export default function Settings() {
       </div>
       <div className="flex flex-col items-center py-5 border-y border-[rgba(255,255,255,0.05)]">
         <div className="flex items-baseline gap-2">
-          <span className="text-[rgba(255,255,255,0.25)] text-xl font-light">Rs</span>
+          <span className="text-[rgba(255,255,255,0.70)] text-xl font-light">Rs</span>
           <input
             type="text"
             inputMode="decimal"
@@ -123,7 +123,7 @@ export default function Settings() {
           />
         </div>
         {parsedIncome > 0 && (
-          <p className="text-[rgba(255,255,255,0.2)] text-xs tabular mt-1">
+          <p className="text-[rgba(255,255,255,0.50)] text-xs tabular mt-1">
             Rs {parsedIncome.toLocaleString('en-PK')}
           </p>
         )}
@@ -151,10 +151,10 @@ export default function Settings() {
             { key: 'savings' as keyof BudgetSplits, label: 'Savings', color: 'rgba(74,222,128,0.75)' },
           ].map(({ key, label, color }) => (
             <div key={key} className="flex items-center justify-between px-6 py-3.5 border-b border-[rgba(255,255,255,0.03)]">
-              <span className="text-[rgba(255,255,255,0.55)] text-[13px] font-medium">{label}</span>
+              <span className="text-[rgba(255,255,255,0.70)] text-[13px] font-medium">{label}</span>
               <div className="flex items-center gap-3">
                 {targets && (
-                  <span className="text-[rgba(255,255,255,0.3)] text-xs tabular">{formatCurrency(targets[key])}</span>
+                  <span className="text-[rgba(255,255,255,0.60)] text-xs tabular">{formatCurrency(targets[key])}</span>
                 )}
                 <span className="text-[rgba(255,255,255,0.7)] text-[13px] font-semibold tabular w-10 text-right" style={{ color }}>
                   {splits[key]}%
@@ -165,7 +165,7 @@ export default function Settings() {
           <div className="px-6 py-3">
             <button
               onClick={() => setEditingSplits(true)}
-              className="text-[rgba(255,255,255,0.3)] text-xs font-medium active:text-[rgba(255,255,255,0.5)] transition-colors"
+              className="text-[rgba(255,255,255,0.60)] text-xs font-medium active:text-[rgba(255,255,255,0.5)] transition-colors"
             >
               {savedSplits ? 'Saved!' : 'Edit split'}
             </button>
@@ -181,7 +181,7 @@ export default function Settings() {
             }
             return (
               <div key={key} className="flex items-center gap-3 px-6 py-3 border-b border-[rgba(255,255,255,0.03)]">
-                <span className="text-[rgba(255,255,255,0.45)] text-[13px] capitalize w-16">{key}</span>
+                <span className="text-[rgba(255,255,255,0.65)] text-[13px] capitalize w-16">{key}</span>
                 <input
                   type="number"
                   min={0}
@@ -190,7 +190,7 @@ export default function Settings() {
                   onChange={e => handleSplitChange(key, e.target.value)}
                   className="w-14 bg-transparent border border-[rgba(255,255,255,0.08)] rounded-lg px-2 py-1.5 text-sm text-[rgba(255,255,255,0.7)] text-center outline-none focus:border-[rgba(255,255,255,0.2)] tabular"
                 />
-                <span className="text-[rgba(255,255,255,0.3)] text-sm">%</span>
+                <span className="text-[rgba(255,255,255,0.60)] text-sm">%</span>
                 <div className="flex-1 h-[2px] bg-[rgba(255,255,255,0.05)] rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all"
@@ -208,7 +208,7 @@ export default function Settings() {
             <div className="flex gap-2">
               <button
                 onClick={() => { setEditingSplits(false); setSplitsError('') }}
-                className="flex-1 py-3 rounded-xl border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.3)] text-sm font-medium transition-all active:scale-[0.98]"
+                className="flex-1 py-3 rounded-xl border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.60)] text-sm font-medium transition-all active:scale-[0.98]"
               >
                 Cancel
               </button>
@@ -233,20 +233,20 @@ export default function Settings() {
           className="flex items-center gap-4 w-full px-6 py-4 border-b border-[rgba(255,255,255,0.05)] active:bg-[rgba(255,255,255,0.02)] transition-colors"
         >
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.04)]">
-            <Tag size={14} strokeWidth={1.5} className="text-[rgba(255,255,255,0.4)]" />
+            <Tag size={14} strokeWidth={1.5} className="text-[rgba(255,255,255,0.65)]" />
           </div>
           <span className="flex-1 text-[rgba(255,255,255,0.65)] text-[13px] font-medium text-left">Categories</span>
-          <ChevronRight size={14} strokeWidth={1.5} className="text-[rgba(255,255,255,0.2)]" />
+          <ChevronRight size={14} strokeWidth={1.5} className="text-[rgba(255,255,255,0.50)]" />
         </button>
         <button
           onClick={() => navigate('/stats')}
           className="flex items-center gap-4 w-full px-6 py-4 border-b border-[rgba(255,255,255,0.05)] active:bg-[rgba(255,255,255,0.02)] transition-colors"
         >
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.04)]">
-            <BarChart2 size={14} strokeWidth={1.5} className="text-[rgba(255,255,255,0.4)]" />
+            <BarChart2 size={14} strokeWidth={1.5} className="text-[rgba(255,255,255,0.65)]" />
           </div>
           <span className="flex-1 text-[rgba(255,255,255,0.65)] text-[13px] font-medium text-left">Lifetime Stats</span>
-          <ChevronRight size={14} strokeWidth={1.5} className="text-[rgba(255,255,255,0.2)]" />
+          <ChevronRight size={14} strokeWidth={1.5} className="text-[rgba(255,255,255,0.50)]" />
         </button>
       </div>
 
@@ -260,7 +260,7 @@ export default function Settings() {
           className="flex items-center gap-4 w-full px-6 py-4 border-b border-[rgba(255,255,255,0.05)] active:bg-[rgba(255,255,255,0.02)] transition-colors"
         >
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[rgba(255,255,255,0.04)]">
-            <Download size={14} strokeWidth={1.5} className="text-[rgba(255,255,255,0.4)]" />
+            <Download size={14} strokeWidth={1.5} className="text-[rgba(255,255,255,0.65)]" />
           </div>
           <span className="flex-1 text-[rgba(255,255,255,0.65)] text-[13px] font-medium text-left">Export as CSV</span>
         </button>
@@ -275,7 +275,7 @@ export default function Settings() {
             'flex items-center justify-center w-8 h-8 rounded-lg',
             clearConfirm ? 'bg-[rgba(248,113,113,0.12)]' : 'bg-[rgba(255,255,255,0.04)]'
           )}>
-            <Trash2 size={14} strokeWidth={1.5} className={clearConfirm ? 'text-[rgba(248,113,113,0.8)]' : 'text-[rgba(255,255,255,0.4)]'} />
+            <Trash2 size={14} strokeWidth={1.5} className={clearConfirm ? 'text-[rgba(248,113,113,0.8)]' : 'text-[rgba(255,255,255,0.65)]'} />
           </div>
           <span className={cn(
             'flex-1 text-[13px] font-medium text-left',
@@ -297,11 +297,11 @@ export default function Settings() {
           { label: 'Currency', value: 'Pakistani Rupee (Rs)' },
         ].map(({ label, value }) => (
           <div key={label} className="flex justify-between items-center px-6 py-3.5 border-b border-[rgba(255,255,255,0.05)]">
-            <span className="text-[rgba(255,255,255,0.35)] text-[13px]">{label}</span>
+            <span className="text-[rgba(255,255,255,0.60)] text-[13px]">{label}</span>
             <span className="text-[rgba(255,255,255,0.6)] text-[13px]">{value}</span>
           </div>
         ))}
-        <p className="px-6 py-4 text-[rgba(255,255,255,0.18)] text-xs">
+        <p className="px-6 py-4 text-[rgba(255,255,255,0.50)] text-xs">
           Your data stays on your device. Nothing is sent to any server.
         </p>
       </div>
