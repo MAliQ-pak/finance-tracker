@@ -71,4 +71,10 @@ db.version(4).stores({
   })
 )
 
+db.version(5).stores({
+  expenses: '++id, amount, category, paymentMethod, date, type, goalId, createdAt',
+  categories: '++id, &label, order, isCustom',
+  goals: '++id, name, createdAt, completedAt, targetDate',
+})
+
 export { db }
