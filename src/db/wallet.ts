@@ -2,8 +2,8 @@ import { db, type WalletBalance, type WalletAdjustment } from './db'
 
 const DIGITAL_METHODS = ['Card', 'Bank Transfer', 'JazzCash', 'EasyPaisa', 'Cheque']
 
-export async function getWalletForMonth(year: number, month: number): Promise<WalletBalance | undefined> {
-  return db.walletBalances.where('[year+month]').equals([year, month]).first()
+export async function getWalletForMonth(year: number, month: number): Promise<WalletBalance | null> {
+  return (await db.walletBalances.where('[year+month]').equals([year, month]).first()) ?? null
 }
 
 export async function setStartingBalances(
