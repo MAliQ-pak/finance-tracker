@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Plus, Target, ChevronDown, ChevronUp, Trash2, Edit2, Sparkles } from 'lucide-react'
+import { Plus, Target, ChevronDown, ChevronUp, Trash2, Edit2, Sparkles, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { db } from '@/db/db'
 import { addGoal, updateGoal, deleteGoal, computeGoalProgress, computeMonthlyRate, projectedCompletion } from '@/db/goals'
@@ -30,54 +30,69 @@ function GoalForm({
   const canSave = name.trim().length > 0 && !isNaN(parsed) && parsed > 0
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-slate-900 rounded-2xl">
-      {/* Name */}
-      <input
-        type="text"
-        value={name}
-        onChange={e => setName(e.target.value)}
-        placeholder="Goal name (e.g. Emergency Fund)"
-        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600 outline-none focus:border-emerald-500"
-      />
+    <div className="flex flex-col gap-0 border-t border-[rgba(255,255,255,0.05)]">
+      <h3 className="text-[rgba(255,255,255,0.55)] text-xs font-semibold uppercase tracking-widest text-center py-4 border-b border-[rgba(255,255,255,0.05)]">
+        {initial?.name ? 'Edit Goal' : 'New Goal'}
+      </h3>
 
-      {/* Amount */}
-      <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3">
-        <span className="text-slate-500 text-sm">Rs</span>
+      {/* Name */}
+      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
+        <p className="section-label mb-2">Name</p>
         <input
           type="text"
-          inputMode="decimal"
-          value={targetAmount}
-          onChange={e => setTargetAmount(e.target.value.replace(/[^\d.]/g, ''))}
-          placeholder="Target amount"
-          className="flex-1 bg-transparent text-sm text-slate-200 placeholder:text-slate-600 outline-none"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="e.g. Emergency Fund"
+          className="w-full bg-transparent border border-[rgba(255,255,255,0.07)] rounded-xl px-4 py-3 text-sm text-[rgba(255,255,255,0.75)] placeholder:text-[rgba(255,255,255,0.15)] outline-none focus:border-[rgba(255,255,255,0.18)] transition-colors"
         />
       </div>
 
+      {/* Amount */}
+      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
+        <p className="section-label mb-2">Target amount</p>
+        <div className="flex items-center gap-2 border border-[rgba(255,255,255,0.07)] rounded-xl px-4 py-3 focus-within:border-[rgba(255,255,255,0.18)] transition-colors">
+          <span className="text-[rgba(255,255,255,0.25)] text-sm">Rs</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={targetAmount}
+            onChange={e => setTargetAmount(e.target.value.replace(/[^\d.]/g, ''))}
+            placeholder="0"
+            className="flex-1 bg-transparent text-sm text-[rgba(255,255,255,0.75)] placeholder:text-[rgba(255,255,255,0.15)] outline-none tabular"
+          />
+        </div>
+      </div>
+
       {/* Date */}
-      <input
-        type="date"
-        value={targetDate}
-        onChange={e => setTargetDate(e.target.value)}
-        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-emerald-500"
-      />
-      <p className="text-xs text-slate-600 -mt-2">Target date is optional</p>
+      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
+        <p className="section-label mb-2">Target date <span className="normal-case font-normal text-[rgba(255,255,255,0.18)]">(optional)</span></p>
+        <input
+          type="date"
+          value={targetDate}
+          onChange={e => setTargetDate(e.target.value)}
+          className="w-full bg-transparent border border-[rgba(255,255,255,0.07)] rounded-xl px-4 py-3 text-sm text-[rgba(255,255,255,0.6)] outline-none focus:border-[rgba(255,255,255,0.18)] transition-colors"
+        />
+      </div>
 
       {/* Icon picker */}
-      <div>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Icon</p>
+      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
+        <p className="section-label mb-3">Icon</p>
         <div className="grid grid-cols-6 gap-2">
-          {GOAL_ICONS.map(name => {
-            const Icon = getIcon(name)
+          {GOAL_ICONS.map(iconName => {
+            const Icon = getIcon(iconName)
+            const selected = icon === iconName
             return (
               <button
-                key={name}
-                onClick={() => setIcon(name)}
+                key={iconName}
+                onClick={() => setIcon(iconName)}
                 className={cn(
                   'flex items-center justify-center w-10 h-10 rounded-xl border transition-all',
-                  icon === name ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-700 bg-slate-800'
+                  selected
+                    ? 'border-[rgba(255,255,255,0.2)] bg-[rgba(255,255,255,0.05)]'
+                    : 'border-[rgba(255,255,255,0.06)] bg-transparent'
                 )}
               >
-                <Icon size={18} style={{ color: icon === name ? color : '#94a3b8' }} />
+                <Icon size={16} strokeWidth={1.5} style={{ color: selected ? color : 'rgba(255,255,255,0.3)' }} />
               </button>
             )
           })}
@@ -85,34 +100,36 @@ function GoalForm({
       </div>
 
       {/* Color picker */}
-      <div>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Color</p>
-        <div className="flex gap-2 flex-wrap">
+      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
+        <p className="section-label mb-3">Color</p>
+        <div className="flex gap-2.5 flex-wrap">
           {DEFAULT_GOAL_COLORS.map(c => (
             <button
               key={c}
               onClick={() => setColor(c)}
-              className={cn(
-                'w-8 h-8 rounded-full border-2 transition-all',
-                color === c ? 'border-white scale-110' : 'border-transparent'
-              )}
+              className="relative w-7 h-7 rounded-full transition-all active:scale-95"
               style={{ backgroundColor: c }}
-            />
+            >
+              {color === c && (
+                <Check size={12} className="absolute inset-0 m-auto text-[#080808]" strokeWidth={2.5} />
+              )}
+            </button>
           ))}
         </div>
       </div>
 
-      <div className="flex gap-2 pt-1">
+      {/* Actions */}
+      <div className="flex gap-3 px-6 py-4">
         <button
           onClick={onCancel}
-          className="flex-1 py-3 rounded-xl bg-slate-800 text-slate-400 text-sm font-medium"
+          className="flex-1 py-3.5 rounded-xl border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.3)] text-sm font-semibold transition-all active:scale-[0.98]"
         >
           Cancel
         </button>
         <button
           onClick={() => canSave && onSave({ name: name.trim(), targetAmount: parsed, targetDate: targetDate || null, icon, color })}
           disabled={!canSave}
-          className="flex-1 py-3 rounded-xl bg-emerald-500 text-slate-950 text-sm font-semibold disabled:opacity-40"
+          className="flex-1 py-3.5 rounded-xl bg-[rgba(255,255,255,0.9)] text-[#080808] text-sm font-semibold disabled:opacity-25 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
         >
           Save Goal
         </button>
@@ -155,45 +172,64 @@ function ContributionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60" />
+      <div className="absolute inset-0 bg-black/50" />
       <div
-        className="relative w-full max-w-[480px] bg-slate-900 rounded-t-2xl p-4 flex flex-col gap-4"
+        className="relative w-full max-w-[480px] bg-[#0f0f0f] rounded-t-2xl flex flex-col pb-8"
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-1" />
-        <h3 className="text-base font-semibold text-slate-200 text-center">Add contribution to {goal.name}</h3>
-        <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3">
-          <span className="text-slate-500 text-sm">Rs</span>
+        <div className="w-8 h-[3px] bg-[rgba(255,255,255,0.12)] rounded-full mx-auto mt-3 mb-1" />
+        <p className="text-[rgba(255,255,255,0.55)] text-xs font-semibold uppercase tracking-widest text-center py-3 border-b border-[rgba(255,255,255,0.05)]">
+          Contribute to {goal.name}
+        </p>
+
+        {/* Amount */}
+        <div className="flex flex-col items-center py-6 border-b border-[rgba(255,255,255,0.05)]">
+          <div className="flex items-baseline gap-2">
+            <span className="text-[rgba(255,255,255,0.25)] text-xl font-light">Rs</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={amount}
+              onChange={e => setAmount(e.target.value.replace(/[^\d.]/g, ''))}
+              placeholder="0"
+              autoFocus
+              className="bg-transparent text-[44px] font-[800] text-[rgba(255,255,255,0.93)] outline-none text-center placeholder:text-[rgba(255,255,255,0.1)] tracking-[-2px] tabular min-w-[2ch]"
+              style={{ width: `${Math.max(2, amount.length + 1)}ch` }}
+            />
+          </div>
+        </div>
+
+        {/* Note */}
+        <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
           <input
             type="text"
-            inputMode="decimal"
-            value={amount}
-            onChange={e => setAmount(e.target.value.replace(/[^\d.]/g, ''))}
-            placeholder="Amount"
-            autoFocus
-            className="flex-1 bg-transparent text-lg font-bold text-slate-200 placeholder:text-slate-600 outline-none"
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            placeholder="Note (optional)"
+            className="w-full bg-transparent border border-[rgba(255,255,255,0.07)] rounded-xl px-4 py-3 text-sm text-[rgba(255,255,255,0.6)] placeholder:text-[rgba(255,255,255,0.15)] outline-none focus:border-[rgba(255,255,255,0.18)] transition-colors"
           />
         </div>
-        <input
-          type="text"
-          value={note}
-          onChange={e => setNote(e.target.value)}
-          placeholder="Note (optional)"
-          className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600 outline-none"
-        />
-        <input
-          type="date"
-          value={date}
-          onChange={e => setDate(e.target.value)}
-          className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none"
-        />
-        <button
-          onClick={handleSave}
-          disabled={!canSave || saving}
-          className="w-full py-3.5 rounded-xl bg-emerald-500 text-slate-950 font-semibold text-sm disabled:opacity-40"
-        >
-          {saving ? 'Saving…' : 'Log Contribution'}
-        </button>
+
+        {/* Date */}
+        <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
+          <input
+            type="date"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            className="w-full bg-transparent border border-[rgba(255,255,255,0.07)] rounded-xl px-4 py-3 text-sm text-[rgba(255,255,255,0.6)] outline-none focus:border-[rgba(255,255,255,0.18)] transition-colors"
+          />
+        </div>
+
+        {/* Save */}
+        <div className="px-6 pt-4">
+          <button
+            onClick={handleSave}
+            disabled={!canSave || saving}
+            className="w-full py-4 rounded-2xl bg-[rgba(255,255,255,0.9)] text-[#080808] font-semibold text-sm disabled:opacity-25 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
+          >
+            {saving ? 'Saving…' : 'Log Contribution'}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -223,97 +259,108 @@ function GoalCard({
   const done = current >= goal.targetAmount
 
   const linkedExpenses = useMemo(
-    () => allExpenses.filter(e => e.goalId === goal.id).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10),
+    () => allExpenses.filter(e => e.goalId === goal.id).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5),
     [allExpenses, goal.id]
   )
 
   let trackingLabel = ''
-  let trackingColor = 'text-slate-500'
+  let trackingColor = 'rgba(255,255,255,0.35)'
   if (goal.targetDate && projected) {
     const deadline = new Date(goal.targetDate)
-    const diffMs = deadline.getTime() - projected.getTime()
-    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
-    if (diffDays >= 30) { trackingLabel = `Ahead by ~${Math.round(diffDays / 30)} month(s)`; trackingColor = 'text-emerald-400' }
-    else if (diffDays >= -30) { trackingLabel = 'On track'; trackingColor = 'text-emerald-400' }
-    else { trackingLabel = `Behind by ~${Math.round(-diffDays / 30)} month(s)`; trackingColor = 'text-amber-400' }
+    const diffDays = Math.round((deadline.getTime() - projected.getTime()) / (1000 * 60 * 60 * 24))
+    if (diffDays >= 30) { trackingLabel = `Ahead ~${Math.round(diffDays / 30)}mo`; trackingColor = 'rgba(74,222,128,0.75)' }
+    else if (diffDays >= -30) { trackingLabel = 'On track'; trackingColor = 'rgba(74,222,128,0.75)' }
+    else { trackingLabel = `Behind ~${Math.round(-diffDays / 30)}mo`; trackingColor = 'rgba(248,190,0,0.75)' }
   } else if (projected) {
     const months = Math.ceil((projected.getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30))
-    trackingLabel = `~${months} month${months !== 1 ? 's' : ''} to go`
-    trackingColor = 'text-slate-400'
+    trackingLabel = `~${months}mo to go`
   }
 
   return (
     <>
-      <div className="bg-slate-900 rounded-2xl overflow-hidden">
+      <div className="border-b border-[rgba(255,255,255,0.05)]">
         <button
-          className="flex items-center gap-3 w-full px-4 py-4 text-left active:bg-slate-800/50"
+          className="flex items-center gap-4 w-full px-6 py-4 text-left active:bg-[rgba(255,255,255,0.01)] transition-colors"
           onClick={() => setExpanded(v => !v)}
         >
           <div
-            className="flex items-center justify-center w-11 h-11 rounded-xl shrink-0"
-            style={{ backgroundColor: `${goal.color}22` }}
+            className="flex items-center justify-center w-10 h-10 rounded-[10px] shrink-0"
+            style={{ backgroundColor: `${goal.color}14` }}
           >
-            <Icon size={20} style={{ color: goal.color }} />
+            <Icon size={18} strokeWidth={1.5} style={{ color: `${goal.color}CC` }} />
           </div>
+
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-sm font-semibold text-slate-200 truncate">{goal.name}</p>
-              <span className="text-xs font-bold text-slate-300 ml-2 shrink-0">{Math.round(pct)}%</span>
+            <div className="flex items-baseline justify-between gap-2 mb-2">
+              <p className="text-[rgba(255,255,255,0.78)] text-[13px] font-medium truncate">{goal.name}</p>
+              <span className="text-[rgba(255,255,255,0.35)] text-[11px] tabular shrink-0">{Math.round(pct)}%</span>
             </div>
-            <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-[2px] bg-[rgba(255,255,255,0.05)] rounded-full overflow-hidden mb-2">
               <div
                 className="h-full rounded-full transition-all"
-                style={{ width: `${pct}%`, backgroundColor: done ? '#10b981' : goal.color }}
+                style={{ width: `${pct}%`, backgroundColor: done ? 'rgba(74,222,128,0.75)' : goal.color }}
               />
             </div>
-            <div className="flex justify-between mt-1.5">
-              <span className="text-xs text-slate-400">{formatCurrency(current)} of {formatCurrency(goal.targetAmount)}</span>
-              {trackingLabel && <span className={`text-xs font-medium ${trackingColor}`}>{trackingLabel}</span>}
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[rgba(255,255,255,0.3)] text-[11px] tabular">
+                {formatCurrency(current)} of {formatCurrency(goal.targetAmount)}
+              </span>
+              {trackingLabel && (
+                <span className="text-[10px] font-medium" style={{ color: trackingColor }}>{trackingLabel}</span>
+              )}
             </div>
           </div>
-          <div className="shrink-0 ml-1 text-slate-600">
-            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+
+          <div className="shrink-0 text-[rgba(255,255,255,0.18)]">
+            {expanded ? <ChevronUp size={14} strokeWidth={1.5} /> : <ChevronDown size={14} strokeWidth={1.5} />}
           </div>
         </button>
 
         {expanded && (
-          <div className="border-t border-slate-800 px-4 py-3 flex flex-col gap-3">
-            {goal.targetDate && (
-              <p className="text-xs text-slate-500">Target date: {goal.targetDate}</p>
-            )}
-            {monthlyRate > 0 && (
-              <p className="text-xs text-slate-500">
-                Monthly contributions: {formatCurrency(monthlyRate)} avg
-                {projected && ` · Est. completion: ${projected.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`}
-              </p>
-            )}
-
-            {linkedExpenses.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Recent contributions</p>
-                <div className="flex flex-col gap-1">
-                  {linkedExpenses.map(e => (
-                    <div key={e.id} className="flex justify-between text-xs">
-                      <span className="text-slate-400">{e.date.slice(5)} · {e.note || 'Contribution'}</span>
-                      <span className="text-emerald-400 font-medium">{formatCurrency(e.amount)}</span>
-                    </div>
-                  ))}
-                </div>
+          <div className="border-t border-[rgba(255,255,255,0.05)]">
+            {/* Stats */}
+            {(goal.targetDate || monthlyRate > 0) && (
+              <div className="px-6 py-3 border-b border-[rgba(255,255,255,0.05)]">
+                {goal.targetDate && (
+                  <p className="text-[rgba(255,255,255,0.3)] text-xs">Target date: {goal.targetDate}</p>
+                )}
+                {monthlyRate > 0 && (
+                  <p className="text-[rgba(255,255,255,0.3)] text-xs mt-0.5">
+                    Avg monthly: {formatCurrency(monthlyRate)}
+                    {projected && ` · Est. done ${projected.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`}
+                  </p>
+                )}
               </div>
             )}
 
-            <div className="flex gap-2 pt-1">
+            {/* Recent contributions */}
+            {linkedExpenses.length > 0 && (
+              <div className="border-b border-[rgba(255,255,255,0.05)]">
+                <div className="px-6 pt-3 pb-1">
+                  <p className="section-label">Recent contributions</p>
+                </div>
+                {linkedExpenses.map(e => (
+                  <div key={e.id} className="flex justify-between items-center px-6 py-2.5 border-b border-[rgba(255,255,255,0.03)]">
+                    <span className="text-[rgba(255,255,255,0.35)] text-[11px]">{e.date.slice(5)} · {e.note || 'Contribution'}</span>
+                    <span className="text-[rgba(74,222,128,0.7)] text-[11px] font-medium tabular">{formatCurrency(e.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-2 px-6 py-3">
               <button
                 onClick={() => setShowContrib(true)}
-                className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-semibold text-xs active:scale-95 transition-all"
+                className="flex-1 py-2.5 rounded-xl bg-[rgba(255,255,255,0.9)] text-[#080808] font-semibold text-xs active:scale-[0.98] transition-all"
               >
-                + Add contribution
+                + Contribute
               </button>
               <button
                 onClick={onEdit}
-                className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-800 text-slate-400"
+                className="flex items-center justify-center w-10 h-10 rounded-xl border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.3)] active:bg-[rgba(255,255,255,0.03)] transition-all"
               >
-                <Edit2 size={14} />
+                <Edit2 size={13} strokeWidth={1.5} />
               </button>
               <button
                 onClick={() => {
@@ -321,11 +368,13 @@ function GoalCard({
                   else onDelete()
                 }}
                 className={cn(
-                  'flex items-center justify-center w-10 h-10 rounded-xl transition-all',
-                  deleteConfirm ? 'bg-red-500 text-white' : 'bg-slate-800 text-red-400'
+                  'flex items-center justify-center w-10 h-10 rounded-xl border transition-all active:scale-[0.98]',
+                  deleteConfirm
+                    ? 'border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.1)] text-[rgba(248,113,113,0.8)]'
+                    : 'border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.25)]'
                 )}
               >
-                <Trash2 size={14} />
+                <Trash2 size={13} strokeWidth={1.5} />
               </button>
             </div>
           </div>
@@ -386,27 +435,45 @@ export default function Goals() {
   }
 
   return (
-    <div className="flex flex-col gap-4 px-4 py-5 pb-8 overflow-y-auto">
-      {/* Header summary */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Your Goals</p>
+    <div className="flex flex-col overflow-y-auto">
+      {/* Page header */}
+      <div className="flex items-center justify-between px-6 pt-5 pb-0">
+        <p className="text-[rgba(255,255,255,0.85)] text-[20px] font-[700] tracking-[-0.8px]">Goals</p>
+        <div className="flex items-center gap-3">
           {goals.length > 0 && (
-            <p className="text-sm text-slate-400 mt-0.5">
-              {formatCurrency(totalSaved)} saved across {goals.length} goal{goals.length !== 1 ? 's' : ''}
-            </p>
+            <button
+              onClick={handleAIAdvice}
+              disabled={copying}
+              className="flex items-center gap-1.5 text-[rgba(255,255,255,0.35)] text-xs font-medium disabled:opacity-50 active:text-[rgba(255,255,255,0.55)] transition-colors"
+            >
+              <Sparkles size={12} strokeWidth={1.5} />
+              {copying ? 'Copying…' : 'AI Advice ↗'}
+            </button>
+          )}
+          {!showAdd && !editingGoal && (
+            <button
+              onClick={() => setShowAdd(true)}
+              className="flex items-center justify-center w-7 h-7 rounded-full bg-[rgba(255,255,255,0.07)] text-[rgba(255,255,255,0.5)] active:bg-[rgba(255,255,255,0.1)] transition-colors"
+              aria-label="New goal"
+            >
+              <Plus size={14} strokeWidth={2} />
+            </button>
           )}
         </div>
-        {!showAdd && (
-          <button
-            onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500 text-slate-950 text-xs font-semibold active:scale-95 transition-all"
-          >
-            <Plus size={14} strokeWidth={2.5} />
-            New goal
-          </button>
-        )}
       </div>
+
+      {/* Summary */}
+      {goals.length > 0 && !showAdd && !editingGoal && (
+        <div className="px-6 pt-5 pb-6">
+          <p className="section-label mb-2">Total saved</p>
+          <p className="hero-amount">{formatCurrency(totalSaved)}</p>
+          <p className="text-[rgba(255,255,255,0.25)] text-xs mt-1.5">
+            across {goals.length} goal{goals.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+      )}
+
+      <div className="h-px bg-[rgba(255,255,255,0.05)]" />
 
       {/* Add / Edit form */}
       {showAdd && (
@@ -422,25 +489,30 @@ export default function Goals() {
 
       {/* Empty state */}
       {goals.length === 0 && !showAdd && (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-center px-4">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
-            <Target size={32} className="text-emerald-400" />
+        <div className="flex flex-col items-center justify-center py-20 gap-4 px-8 text-center">
+          <div
+            className="flex items-center justify-center w-14 h-14 rounded-2xl"
+            style={{ backgroundColor: 'rgba(74,222,128,0.07)' }}
+          >
+            <Target size={24} strokeWidth={1.5} style={{ color: 'rgba(74,222,128,0.5)' }} />
           </div>
-          <p className="text-slate-200 font-semibold">Set your first goal</p>
-          <p className="text-sm text-slate-500 leading-relaxed">
-            Saving Rs 1 today is a goal achieved tomorrow. Start small — an emergency fund, a gadget, a trip.
-          </p>
+          <div>
+            <p className="text-[rgba(255,255,255,0.6)] text-sm font-medium mb-1.5">Set your first goal</p>
+            <p className="text-[rgba(255,255,255,0.25)] text-xs leading-relaxed">
+              An emergency fund, a gadget, a trip. Start small — every rupee counts.
+            </p>
+          </div>
           <button
             onClick={() => setShowAdd(true)}
-            className="mt-2 px-6 py-3 rounded-xl bg-emerald-500 text-slate-950 font-semibold text-sm active:scale-95 transition-all"
+            className="mt-1 px-6 py-3 rounded-2xl bg-[rgba(255,255,255,0.9)] text-[#080808] font-semibold text-sm active:scale-[0.98] transition-all"
           >
             Create a goal
           </button>
         </div>
       )}
 
-      {/* Goal cards */}
-      {goals.map(goal => (
+      {/* Goal list */}
+      {!showAdd && !editingGoal && goals.map(goal => (
         <GoalCard
           key={goal.id}
           goal={goal}
@@ -450,21 +522,11 @@ export default function Goals() {
         />
       ))}
 
-      {/* AI Goals Advice */}
-      {goals.length > 0 && (
-        <button
-          onClick={handleAIAdvice}
-          disabled={copying}
-          className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-400 font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-50 mt-2"
-        >
-          <Sparkles size={16} />
-          {copying ? 'Copying…' : '🪄 Get AI Goals Advice'}
-        </button>
-      )}
+      <div className="h-8" />
 
       {/* Toast */}
       {toastMsg && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium px-4 py-3 rounded-xl shadow-xl max-w-[300px] text-center">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-[#1a1a1a] border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.7)] text-xs font-medium px-4 py-3 rounded-xl shadow-xl max-w-[300px] text-center">
           {toastMsg}
         </div>
       )}
