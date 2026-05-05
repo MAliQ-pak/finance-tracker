@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ChevronUp, ChevronDown, Trash2, Edit2, Plus, Check, X } from 'lucide-react'
+import { ChevronUp, ChevronDown, Trash2, Edit2, Plus, Check } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { db } from '@/db/db'
 import {
@@ -29,68 +30,93 @@ function CategoryForm({
   const [color, setColor] = useState(initial?.color ?? '#10b981')
 
   const canSave = label.trim().length > 0
+  const SelectedIcon = getIcon(icon)
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-slate-900 rounded-2xl border border-slate-800">
-      <input
-        type="text"
-        value={label}
-        onChange={e => setLabel(e.target.value)}
-        placeholder="Category name"
-        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600 outline-none focus:border-emerald-500"
-        autoFocus
-      />
+    <div className="border-t border-[rgba(255,255,255,0.05)]">
+      <h3 className="text-[rgba(255,255,255,0.55)] text-xs font-semibold uppercase tracking-widest text-center py-4 border-b border-[rgba(255,255,255,0.05)]">
+        {initial?.label ? 'Edit Category' : 'New Category'}
+      </h3>
+
+      {/* Preview */}
+      <div className="flex items-center gap-3 px-6 py-3 border-b border-[rgba(255,255,255,0.05)]">
+        <div
+          className="flex items-center justify-center w-9 h-9 rounded-[10px] shrink-0"
+          style={{ backgroundColor: `${color}18` }}
+        >
+          <SelectedIcon size={16} strokeWidth={1.5} style={{ color }} />
+        </div>
+        <span className="text-[rgba(255,255,255,0.6)] text-[13px] font-medium">{label || 'Preview'}</span>
+      </div>
+
+      {/* Name */}
+      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
+        <p className="section-label mb-2">Name</p>
+        <input
+          type="text"
+          value={label}
+          onChange={e => setLabel(e.target.value)}
+          placeholder="Category name"
+          autoFocus
+          className="w-full bg-transparent border border-[rgba(255,255,255,0.07)] rounded-xl px-4 py-3 text-sm text-[rgba(255,255,255,0.75)] placeholder:text-[rgba(255,255,255,0.15)] outline-none focus:border-[rgba(255,255,255,0.18)] transition-colors"
+        />
+      </div>
 
       {/* Color */}
-      <div>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Color</p>
-        <div className="flex flex-wrap gap-2">
+      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
+        <p className="section-label mb-3">Color</p>
+        <div className="flex flex-wrap gap-2.5">
           {PRESET_COLORS.map(c => (
             <button
               key={c}
               onClick={() => setColor(c)}
-              className={cn('w-8 h-8 rounded-full border-2 transition-all', color === c ? 'border-white scale-110' : 'border-transparent')}
+              className="relative w-7 h-7 rounded-full transition-all active:scale-95"
               style={{ backgroundColor: c }}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Icon picker */}
-      <div>
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Icon</p>
-        <div className="grid grid-cols-7 gap-1.5 max-h-48 overflow-y-auto">
-          {PICKER_ICONS.map(({ name, icon: Icon }) => (
-            <button
-              key={name}
-              onClick={() => setIcon(name)}
-              className={cn(
-                'flex items-center justify-center w-10 h-10 rounded-xl border transition-all',
-                icon === name ? 'border-emerald-500 bg-emerald-500/10' : 'border-slate-700 bg-slate-800'
-              )}
             >
-              <Icon size={16} style={{ color: icon === name ? color : '#64748b' }} />
+              {color === c && (
+                <Check size={12} className="absolute inset-0 m-auto text-[#080808]" strokeWidth={2.5} />
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Preview */}
-      <div className="flex items-center gap-3 px-3 py-2 bg-slate-800 rounded-xl">
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ backgroundColor: `${color}22` }}>
-          {(() => { const Icon = getIcon(icon); return <Icon size={17} style={{ color }} /> })()}
+      {/* Icon picker */}
+      <div className="px-6 py-4 border-b border-[rgba(255,255,255,0.05)]">
+        <p className="section-label mb-3">Icon</p>
+        <div className="grid grid-cols-7 gap-1.5 max-h-48 overflow-y-auto">
+          {PICKER_ICONS.map(({ name, icon: Icon }) => {
+            const selected = icon === name
+            return (
+              <button
+                key={name}
+                onClick={() => setIcon(name)}
+                className={cn(
+                  'flex items-center justify-center w-10 h-10 rounded-xl border transition-all',
+                  selected
+                    ? 'border-[rgba(255,255,255,0.2)] bg-[rgba(255,255,255,0.05)]'
+                    : 'border-[rgba(255,255,255,0.06)] bg-transparent'
+                )}
+              >
+                <Icon size={15} strokeWidth={1.5} style={{ color: selected ? color : 'rgba(255,255,255,0.3)' }} />
+              </button>
+            )
+          })}
         </div>
-        <span className="text-sm font-medium text-slate-200">{label || 'Preview'}</span>
       </div>
 
-      <div className="flex gap-2">
-        <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-400 text-sm font-medium">
+      {/* Actions */}
+      <div className="flex gap-3 px-6 py-4">
+        <button
+          onClick={onCancel}
+          className="flex-1 py-3.5 rounded-xl border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.3)] text-sm font-semibold transition-all active:scale-[0.98]"
+        >
           Cancel
         </button>
         <button
           onClick={() => canSave && onSave({ label: label.trim(), icon, color })}
           disabled={!canSave}
-          className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-slate-950 text-sm font-semibold disabled:opacity-40"
+          className="flex-1 py-3.5 rounded-xl bg-[rgba(255,255,255,0.9)] text-[#080808] text-sm font-semibold disabled:opacity-25 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
         >
           Save
         </button>
@@ -133,9 +159,12 @@ function CategoryRow({
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <div className="flex items-center justify-center w-9 h-9 rounded-lg shrink-0" style={{ backgroundColor: `${cat.color}22` }}>
-        <Icon size={16} style={{ color: cat.color }} />
+    <div className="flex items-center gap-3 px-6 py-3.5 border-b border-[rgba(255,255,255,0.05)]">
+      <div
+        className="flex items-center justify-center w-9 h-9 rounded-[10px] shrink-0"
+        style={{ backgroundColor: `${cat.color}14` }}
+      >
+        <Icon size={15} strokeWidth={1.5} style={{ color: `${cat.color}CC` }} />
       </div>
 
       {renaming ? (
@@ -143,45 +172,49 @@ function CategoryRow({
           value={newName}
           onChange={e => setNewName(e.target.value)}
           onBlur={handleRename}
-          onKeyDown={e => { if (e.key === 'Enter') handleRename(); if (e.key === 'Escape') setRenaming(false) }}
-          className="flex-1 bg-slate-800 border border-emerald-500 rounded-lg px-2 py-1 text-sm text-slate-200 outline-none"
+          onKeyDown={e => {
+            if (e.key === 'Enter') handleRename()
+            if (e.key === 'Escape') setRenaming(false)
+          }}
+          className="flex-1 bg-transparent border-b border-[rgba(255,255,255,0.18)] pb-0.5 text-[13px] text-[rgba(255,255,255,0.75)] outline-none"
           autoFocus
         />
       ) : (
-        <span className="flex-1 text-sm font-medium text-slate-200 min-w-0 truncate">{cat.label}</span>
+        <span className="flex-1 text-[rgba(255,255,255,0.65)] text-[13px] font-medium min-w-0 truncate">{cat.label}</span>
       )}
 
-      <div className="flex items-center gap-1 shrink-0">
-        {/* Reorder */}
+      <div className="flex items-center gap-0.5 shrink-0">
         <button
           onClick={onMoveUp}
           disabled={isFirst}
-          className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-600 disabled:opacity-30 hover:text-slate-300 active:text-slate-100"
+          className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.2)] disabled:opacity-20 active:text-[rgba(255,255,255,0.5)]"
         >
-          <ChevronUp size={14} />
+          <ChevronUp size={13} strokeWidth={1.5} />
         </button>
         <button
           onClick={onMoveDown}
           disabled={isLast}
-          className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-600 disabled:opacity-30 hover:text-slate-300 active:text-slate-100"
+          className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.2)] disabled:opacity-20 active:text-[rgba(255,255,255,0.5)]"
         >
-          <ChevronDown size={14} />
+          <ChevronDown size={13} strokeWidth={1.5} />
         </button>
 
-        {/* Edit (custom only) */}
         {cat.isCustom && (
           <>
             <button
-              onClick={() => { if (renaming) handleRename(); else { setRenaming(true); setNewName(cat.label) }}}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-slate-200"
+              onClick={() => {
+                if (renaming) handleRename()
+                else { setRenaming(true); setNewName(cat.label) }
+              }}
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.25)] active:text-[rgba(255,255,255,0.5)]"
             >
-              {renaming ? <Check size={13} className="text-emerald-400" /> : <Edit2 size={13} />}
+              {renaming ? <Check size={12} strokeWidth={2} className="text-[rgba(74,222,128,0.7)]" /> : <Edit2 size={12} strokeWidth={1.5} />}
             </button>
             <button
               onClick={() => onEdit()}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-slate-200"
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(255,255,255,0.25)] active:text-[rgba(255,255,255,0.5)]"
             >
-              <Edit2 size={13} />
+              <Edit2 size={12} strokeWidth={1.5} />
             </button>
             <button
               onClick={() => {
@@ -190,10 +223,10 @@ function CategoryRow({
               }}
               className={cn(
                 'flex items-center justify-center w-7 h-7 rounded-lg transition-all',
-                deleteConfirm ? 'bg-red-500 text-white' : 'text-red-400/60 hover:text-red-400'
+                deleteConfirm ? 'text-[rgba(248,113,113,0.8)]' : 'text-[rgba(255,255,255,0.2)] active:text-[rgba(248,113,113,0.6)]'
               )}
             >
-              {deleteConfirm ? <X size={13} /> : <Trash2 size={13} />}
+              <Trash2 size={12} strokeWidth={1.5} />
             </button>
           </>
         )}
@@ -214,7 +247,7 @@ export default function ManageCategories() {
       await addCategory(data)
       setShowAdd(false)
     } catch {
-      // duplicate label — silently ignore for now
+      // duplicate label
     }
   }
 
@@ -228,28 +261,34 @@ export default function ManageCategories() {
   }
 
   return (
-    <div className="flex flex-col gap-4 px-4 py-5 pb-8 overflow-y-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <button onClick={() => navigate('/settings')} className="text-xs text-slate-500 mb-1">← Settings</button>
-          <h1 className="text-base font-semibold text-slate-200">Manage Categories</h1>
-        </div>
+    <div className="flex flex-col overflow-y-auto pb-8">
+      {/* Page header */}
+      <div className="flex items-center gap-3 px-6 pt-5 pb-0">
+        <button
+          onClick={() => navigate('/settings')}
+          className="flex items-center justify-center w-8 h-8 -ml-1 rounded-full text-[rgba(255,255,255,0.35)] active:text-[rgba(255,255,255,0.6)] transition-colors"
+        >
+          <ChevronLeft size={18} strokeWidth={1.5} />
+        </button>
+        <p className="text-[rgba(255,255,255,0.85)] text-[20px] font-[700] tracking-[-0.8px] flex-1">Categories</p>
         {!showAdd && !editingCat && (
           <button
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500 text-slate-950 text-xs font-semibold active:scale-95"
+            className="flex items-center justify-center w-7 h-7 rounded-full bg-[rgba(255,255,255,0.07)] text-[rgba(255,255,255,0.5)] active:bg-[rgba(255,255,255,0.1)] transition-colors"
+            aria-label="Add category"
           >
-            <Plus size={14} />
-            Add
+            <Plus size={14} strokeWidth={2} />
           </button>
         )}
       </div>
 
-      <p className="text-xs text-slate-600 -mt-2">
+      <p className="px-6 pt-2 pb-5 text-[rgba(255,255,255,0.2)] text-xs leading-relaxed">
         Default categories can be reordered. Only custom categories can be renamed or deleted.
-        Deleting a custom category moves its expenses to "Other".
       </p>
 
+      <div className="h-px bg-[rgba(255,255,255,0.05)]" />
+
+      {/* Form */}
       {showAdd && (
         <CategoryForm onSave={handleAdd} onCancel={() => setShowAdd(false)} />
       )}
@@ -261,20 +300,19 @@ export default function ManageCategories() {
         />
       )}
 
-      <div className="bg-slate-900 rounded-2xl divide-y divide-slate-800/60">
-        {categories.map((cat, idx) => (
-          <CategoryRow
-            key={cat.id}
-            cat={cat}
-            isFirst={idx === 0}
-            isLast={idx === categories.length - 1}
-            onMoveUp={() => moveCategoryUp(cat.id)}
-            onMoveDown={() => moveCategoryDown(cat.id)}
-            onEdit={() => setEditingCat(cat)}
-            onDelete={() => deleteCategory(cat.id)}
-          />
-        ))}
-      </div>
+      {/* Category list */}
+      {categories.map((cat, idx) => (
+        <CategoryRow
+          key={cat.id}
+          cat={cat}
+          isFirst={idx === 0}
+          isLast={idx === categories.length - 1}
+          onMoveUp={() => moveCategoryUp(cat.id)}
+          onMoveDown={() => moveCategoryDown(cat.id)}
+          onEdit={() => setEditingCat(cat)}
+          onDelete={() => deleteCategory(cat.id)}
+        />
+      ))}
     </div>
   )
 }
