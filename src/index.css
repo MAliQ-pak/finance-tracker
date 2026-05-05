@@ -1,17 +1,20 @@
 @import "tailwindcss";
 
-/* Tailwind v4 theme tokens — used by shadcn utility classes */
+/* Premium Calm — Direction 2 design tokens */
 @theme {
-  --color-background: #020617;      /* slate-950 */
-  --color-foreground: #f1f5f9;      /* slate-100 */
-  --color-muted: #1e293b;           /* slate-800 */
-  --color-muted-foreground: #64748b;/* slate-500 */
-  --color-input: #1e293b;           /* slate-800 – Switch unchecked / input border */
-  --color-ring: #10b981;            /* emerald-500 */
-  --color-primary: #10b981;         /* emerald-500 */
-  --color-primary-foreground: #020617;
-  --color-destructive: #ef4444;     /* red-500 */
-  --color-destructive-foreground: #f8fafc;
+  --color-background: #080808;
+  --color-surface: #0f0f0f;
+  --color-foreground: rgba(255,255,255,0.85);
+
+  /* shadcn compatibility */
+  --color-muted: rgba(255,255,255,0.06);
+  --color-muted-foreground: rgba(255,255,255,0.4);
+  --color-input: rgba(255,255,255,0.06);
+  --color-ring: rgba(255,255,255,0.25);
+  --color-primary: rgba(255,255,255,0.9);
+  --color-primary-foreground: #080808;
+  --color-destructive: rgba(248,113,113,0.85);
+  --color-destructive-foreground: rgba(255,255,255,0.9);
 }
 
 @layer base {
@@ -25,9 +28,9 @@
 
   body {
     margin: 0;
-    background-color: theme(--color-slate-900);
-    color: theme(--color-slate-100);
-    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background-color: #080808;
+    color: rgba(255,255,255,0.85);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -36,8 +39,50 @@
     min-height: 100svh;
   }
 
-  /* Native date input — dark style */
   input[type="date"] {
     color-scheme: dark;
   }
+
+  /* Tabular nums on all monetary inputs */
+  input[type="text"][inputmode="decimal"],
+  input[type="number"] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Reusable utility classes for the Premium Calm design */
+@layer utilities {
+  .text-primary   { color: rgba(255,255,255,0.93); }
+  .text-strong    { color: rgba(255,255,255,0.85); }
+  .text-default   { color: rgba(255,255,255,0.70); }
+  .text-muted     { color: rgba(255,255,255,0.55); }
+  .text-faint     { color: rgba(255,255,255,0.40); }
+  .text-whisper   { color: rgba(255,255,255,0.22); }
+  .text-barely    { color: rgba(255,255,255,0.18); }
+
+  .bg-surface     { background-color: #0f0f0f; }
+  .bg-subtle      { background-color: rgba(255,255,255,0.025); }
+
+  .border-hairline { border-color: rgba(255,255,255,0.05); }
+  .border-subtle   { border-color: rgba(255,255,255,0.08); }
+  .divide-hairline > * + * { border-top: 1px solid rgba(255,255,255,0.05); }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.22);
+  }
+
+  .hero-amount {
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: -2.5px;
+    line-height: 1;
+    color: rgba(255,255,255,0.93);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tabular { font-variant-numeric: tabular-nums; }
 }
