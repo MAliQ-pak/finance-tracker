@@ -34,10 +34,29 @@ export interface Goal {
   completedAt: string | null
 }
 
+export interface WalletAdjustment {
+  id: string        // nanoid
+  amount: number    // positive = inflow, negative = outflow
+  note: string
+  method: 'cash' | 'digital'
+  createdAt: string
+}
+
+export interface WalletBalance {
+  id: number
+  year: number
+  month: number     // 1-12
+  startingCash: number
+  startingDigital: number
+  adjustments: WalletAdjustment[]
+  confirmedAt: string | null
+}
+
 const db = new Dexie('FinanceTrackerDB') as Dexie & {
   expenses: EntityTable<Expense, 'id'>
   categories: EntityTable<CategoryRecord, 'id'>
   goals: EntityTable<Goal, 'id'>
+  walletBalances: EntityTable<WalletBalance, 'id'>
 }
 
 db.version(1).stores({
@@ -76,5 +95,14 @@ db.version(5).stores({
   categories: '++id, &label, order, isCustom',
   goals: '++id, name, createdAt, completedAt, targetDate',
 })
+
+db.version(6).stores({
+  expenses: '++id, amount, category, paymentMethod, date, type, goalId, createdAt',
+  categories: '++id, &label, order, isCustom',
+  goals: '++id, name, createdAt, completedAt, targetDate',
+  walletBalances: '++id, &[year+month], year, month, confirmedAt',
+}).upgrade(tx =>
+  tx.table('walletBalances').toCollection().modify(() => {})
+)
 
 export { db }
