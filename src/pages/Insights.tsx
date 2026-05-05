@@ -15,6 +15,7 @@ import { generateMonthlyReviewPrompt } from '@/lib/aiPrompt'
 import { detectRecurringExpenses, addIgnoredKey } from '@/lib/recurring'
 import { db } from '@/db/db'
 import type { Expense } from '@/db/db'
+import { getWalletForMonth, calculateCurrentBalances } from '@/db/wallet'
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
@@ -128,6 +129,18 @@ export default function Insights() {
   }
 
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1
+
+  const walletRecord = useLiveQuery(
+    () => isCurrentMonth ? getWalletForMonth(year, month) : Promise.resolve(undefined),
+    [year, month, isCurrentMonth]
+  )
+  const walletBalances = useLiveQuery(
+    async () => {
+      if (!walletRecord || !isCurrentMonth) return null
+      return calculateCurrentBalances(year, month)
+    },
+    [walletRecord, year, month, isCurrentMonth]
+  )
 
   // Budget row data
   const budgetRows = [
@@ -252,6 +265,26 @@ export default function Insights() {
               })}
             </div>
           </div>
+
+          {/* Wallet remaining row */}
+          {walletRecord && walletBalances && income > 0 && (
+            <>
+              <div className="h-px bg-[rgba(var(--fg),0.05)]" />
+              <div className="flex items-center justify-between px-6 py-3.5">
+                <span className="text-[rgba(var(--fg),0.70)] text-[13px] font-medium">Wallet remaining</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[rgba(var(--fg),0.78)] text-[13px] font-semibold tabular">
+                    {formatCurrency(walletBalances.total)}
+                  </span>
+                  {walletBalances.total > 0 && income > 0 && (
+                    <span className="text-[10px] font-medium text-[rgba(var(--fg),0.45)]">
+                      {Math.round((walletBalances.total / income) * 100)}% of income left
+                    </span>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Divider */}
           <div className="h-px bg-[rgba(var(--fg),0.05)]" />

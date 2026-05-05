@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useNavigate } from 'react-router-dom'
-import { Settings } from 'lucide-react'
+import { Settings, ChevronRight } from 'lucide-react'
 import { formatCurrency, getDateLabel } from '@/lib/categories'
 import { getExpensesForMonth, computeTotals } from '@/db/expenses'
 import { db } from '@/db/db'
@@ -10,6 +10,7 @@ import type { Expense, ExpenseType } from '@/db/db'
 import { calculateNoSpendStreak, calculateUnderBudgetStreak } from '@/lib/streaks'
 import { getMonthlyIncome } from '@/lib/preferences'
 import { getIcon } from '@/lib/iconMap'
+import { getWalletForMonth, calculateCurrentBalances } from '@/db/wallet'
 
 const TYPE_TAG: Record<ExpenseType, { label: string; text: string; bg: string }> = {
   need:    { label: 'Need',    text: 'text-[rgba(var(--rgb-need),0.75)]',  bg: 'bg-[rgba(var(--rgb-need),0.07)]'  },
@@ -65,6 +66,18 @@ export default function Home() {
   const underBudgetStreak = useMemo(
     () => calculateUnderBudgetStreak(allExpenses, dailyBudget),
     [allExpenses, dailyBudget]
+  )
+
+  const walletRecord = useLiveQuery(
+    () => getWalletForMonth(now.getFullYear(), now.getMonth() + 1),
+    []
+  )
+  const walletBalances = useLiveQuery(
+    async () => {
+      if (!walletRecord) return null
+      return calculateCurrentBalances(now.getFullYear(), now.getMonth() + 1)
+    },
+    [walletRecord]
   )
 
   const needsPct   = pct(needs, total)
@@ -148,6 +161,22 @@ export default function Home() {
               Under budget · {underBudgetStreak} day{underBudgetStreak !== 1 ? 's' : ''}
             </span>
           </div>
+        )}
+
+        {/* Wallet remaining row */}
+        {walletRecord && walletBalances && (
+          <button
+            onClick={() => navigate('/wallet')}
+            className="flex items-center justify-between px-6 py-3 border-b border-[rgba(var(--fg),0.05)] active:bg-[rgba(var(--fg),0.02)] transition-colors w-full"
+          >
+            <span className="section-label">Wallet</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[rgba(var(--fg),0.70)] text-xs tabular">
+                Remaining {formatCurrency(walletBalances.total)}
+              </span>
+              <ChevronRight size={12} strokeWidth={1.5} className="text-[rgba(var(--fg),0.35)]" />
+            </div>
+          </button>
         )}
 
         {/* Empty state */}
