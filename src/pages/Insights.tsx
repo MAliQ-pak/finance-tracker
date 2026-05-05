@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ChevronLeft, ChevronRight, Sparkles, RotateCcw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, RotateCcw, Sparkles } from 'lucide-react'
 import {
-  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
+  BarChart, Bar, XAxis, YAxis,
   ResponsiveContainer, Tooltip,
 } from 'recharts'
 import { getExpensesForMonth } from '@/db/expenses'
@@ -16,53 +16,10 @@ import { db } from '@/db/db'
 import type { Expense } from '@/db/db'
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-const TYPE_COLORS = { need: '#3b82f6', want: '#a855f7', savings: '#10b981' }
 
 function pct(value: number, total: number) {
   if (total === 0) return 0
   return Math.min(100, Math.round((value / total) * 100))
-}
-
-function fmt(n: number) {
-  if (n >= 100_000) return `Rs${(n / 1000).toFixed(0)}k`
-  if (n >= 1_000) return `Rs${(n / 1000).toFixed(1)}k`
-  return `Rs${n.toFixed(0)}`
-}
-
-interface ProgressBarProps {
-  label: string; spent: number; target: number; color: string; pace: number
-}
-
-function BudgetBar({ label, spent, target, color, pace }: ProgressBarProps) {
-  const spentPct = target > 0 ? Math.min(100, (spent / target) * 100) : 0
-  const pacePct = Math.min(100, pace * 100)
-  const over = target > 0 && spent > target
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex justify-between items-baseline">
-        <span className="text-xs font-semibold" style={{ color }}>{label}</span>
-        <span className="text-xs text-slate-400">
-          {formatCurrency(spent)}
-          {target > 0 && <span className="text-slate-600"> / {formatCurrency(target)}</span>}
-        </span>
-      </div>
-      <div className="relative h-2 bg-slate-800 rounded-full overflow-hidden">
-        <div className="absolute left-0 top-0 h-full rounded-full transition-all"
-          style={{ width: `${spentPct}%`, backgroundColor: over ? '#ef4444' : color }} />
-        {target > 0 && (
-          <div className="absolute top-0 w-0.5 h-full bg-slate-500 opacity-60"
-            style={{ left: `${pacePct}%` }} />
-        )}
-      </div>
-      <div className="flex justify-between">
-        <span className="text-[10px] text-slate-600">
-          {target > 0 ? `${pct(spent, target)}% of budget` : 'No target set'}
-        </span>
-        {over && <span className="text-[10px] text-red-400">Over by {formatCurrency(spent - target)}</span>}
-      </div>
-    </div>
-  )
 }
 
 export default function Insights() {
@@ -82,14 +39,13 @@ export default function Insights() {
   const allExpenses = useLiveQuery(() => db.expenses.toArray()) ?? []
   const dbCategories = useLiveQuery(() => db.categories.orderBy('order').toArray()) ?? []
 
-  // Build color map from db categories
   const categoryColorMap = useMemo(() => {
     const m: Record<string, string> = {}
     for (const c of dbCategories) m[c.label] = c.color
     return m
   }, [dbCategories])
 
-  const { needs, wants, savings, total, catChartData, dailyData, topExpenses, typeData } = useMemo(() => {
+  const { needs, wants, savings, total, catChartData, dailyData, topExpenses } = useMemo(() => {
     let needs = 0, wants = 0, savings = 0
     const catMap: Record<string, number> = {}
     const dailyMap: Record<string, number> = {}
@@ -109,17 +65,11 @@ export default function Insights() {
 
     const topExpenses = [...expenses].sort((a, b) => b.amount - a.amount).slice(0, 5)
 
-    const typeData = [
-      { name: 'Needs', value: needs, color: TYPE_COLORS.need },
-      { name: 'Wants', value: wants, color: TYPE_COLORS.want },
-      { name: 'Savings', value: savings, color: TYPE_COLORS.savings },
-    ].filter(d => d.value > 0)
-
     const catChartData = Object.entries(catMap)
       .map(([name, value]) => ({ name, value, color: categoryColorMap[name] ?? '#6b7280' }))
       .sort((a, b) => b.value - a.value)
 
-    return { needs, wants, savings, total, catChartData, dailyData, topExpenses, typeData }
+    return { needs, wants, savings, total, catChartData, dailyData, topExpenses }
   }, [expenses, categoryColorMap])
 
   const insights = useMemo(
@@ -128,7 +78,6 @@ export default function Insights() {
   )
 
   const recurring = useMemo(() => detectRecurringExpenses(allExpenses), [allExpenses, ignoredKeys])
-
   const subscriptions = recurring.filter(r => r.isSubscription)
   const subscriptionTotal = subscriptions.reduce((s, r) => s + r.averageAmount, 0)
 
@@ -169,228 +118,318 @@ export default function Insights() {
 
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1
 
+  // Budget row data
+  const budgetRows = [
+    {
+      label: 'Needs',
+      spent: needs,
+      target: targets.needs,
+      targetPct: splits.needs,
+      actualPct: pct(needs, total),
+      color: 'rgba(96,165,250,',
+    },
+    {
+      label: 'Wants',
+      spent: wants,
+      target: targets.wants,
+      targetPct: splits.wants,
+      actualPct: pct(wants, total),
+      color: 'rgba(167,139,250,',
+    },
+    {
+      label: 'Savings',
+      spent: savings,
+      target: targets.savings,
+      targetPct: splits.savings,
+      actualPct: pct(savings, total),
+      color: 'rgba(74,222,128,',
+    },
+  ]
+
   return (
-    <div className="flex flex-col gap-5 px-4 py-5 pb-8 overflow-y-auto">
+    <div className="flex flex-col overflow-y-auto pb-8">
+      {/* Page header */}
+      <div className="flex items-center justify-between px-6 pt-5 pb-0">
+        <p className="text-[rgba(255,255,255,0.85)] text-[20px] font-[700] tracking-[-0.8px]">Insights</p>
+        <button
+          onClick={handleAIReview}
+          disabled={copying}
+          className="flex items-center gap-1.5 text-[rgba(255,255,255,0.35)] text-xs font-medium active:text-[rgba(255,255,255,0.6)] transition-colors disabled:opacity-40"
+        >
+          <Sparkles size={12} strokeWidth={1.5} />
+          {copying ? 'Copying…' : 'AI Review ↗'}
+        </button>
+      </div>
 
       {/* Month switcher */}
-      <div className="flex items-center justify-between bg-slate-900 rounded-2xl px-4 py-3">
-        <button onClick={prevMonth} className="p-1 text-slate-400 active:text-slate-200">
-          <ChevronLeft size={20} />
+      <div className="flex items-center justify-between px-6 pt-3 pb-0">
+        <button onClick={prevMonth} className="text-[rgba(255,255,255,0.3)] active:text-[rgba(255,255,255,0.6)] p-1">
+          <ChevronLeft size={16} strokeWidth={1.5} />
         </button>
-        <div className="text-center">
-          <p className="text-base font-semibold text-slate-100">{MONTH_NAMES[month - 1]} {year}</p>
-          <p className="text-xs text-slate-500">{formatCurrency(total)} total</p>
-        </div>
-        <button onClick={nextMonth} disabled={isCurrentMonth} className="p-1 text-slate-400 active:text-slate-200 disabled:opacity-30">
-          <ChevronRight size={20} />
+        <span className="text-[rgba(255,255,255,0.4)] text-xs font-medium">
+          {MONTH_NAMES[month - 1]} {year}
+          {total > 0 && <span className="ml-2 text-[rgba(255,255,255,0.22)]">· {formatCurrency(total)}</span>}
+        </span>
+        <button
+          onClick={nextMonth}
+          disabled={isCurrentMonth}
+          className="text-[rgba(255,255,255,0.3)] active:text-[rgba(255,255,255,0.6)] disabled:opacity-20 p-1"
+        >
+          <ChevronRight size={16} strokeWidth={1.5} />
         </button>
       </div>
 
       {expenses.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 gap-2">
-          <p className="text-slate-300 font-medium">No data for this month</p>
-          <p className="text-sm text-slate-600">Add expenses to see insights</p>
+        <div className="flex flex-col items-center justify-center py-24 gap-2">
+          <p className="text-[rgba(255,255,255,0.35)] text-sm font-medium">No data for this month</p>
+          <p className="text-[rgba(255,255,255,0.18)] text-xs">Add expenses to see insights</p>
         </div>
       )}
 
       {expenses.length > 0 && (
         <>
-          {/* 50/30/20 Budget bars */}
-          <section>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">50 / 30 / 20 Budget</p>
+          {/* Budget vs actual */}
+          <div className="mt-5">
+            <div className="px-6 mb-3">
+              <p className="section-label">Budget vs actual</p>
+            </div>
             {income === 0 && (
-              <p className="text-xs text-slate-600 mb-3">Set your monthly income in Settings to see targets.</p>
+              <div className="px-6 mb-3">
+                <p className="text-[rgba(255,255,255,0.22)] text-xs">Set monthly income in Settings to see targets.</p>
+              </div>
             )}
-            <div className="bg-slate-900 rounded-2xl p-4 flex flex-col gap-4">
-              <BudgetBar label="Needs" spent={needs} target={targets.needs} color={TYPE_COLORS.need} pace={pace} />
-              <BudgetBar label="Wants" spent={wants} target={targets.wants} color={TYPE_COLORS.want} pace={pace} />
-              <BudgetBar label="Savings" spent={savings} target={targets.savings} color={TYPE_COLORS.savings} pace={pace} />
-            </div>
-          </section>
+            <div className="flex flex-col">
+              {budgetRows.map((row, i) => {
+                const over = row.target > 0 && row.spent > row.target
+                const barWidth = row.target > 0 ? Math.min(100, (row.spent / row.target) * 100) : 0
+                const pctOfTarget = row.target > 0
+                  ? `${row.actualPct}% of ${row.targetPct}%`
+                  : `${row.actualPct}% of total`
+                const deltaColor = over ? 'rgba(248,113,113,0.85)' : `${row.color}0.65)`
 
-          {/* Smart insights + AI button */}
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Insights</p>
-            </div>
-            {/* AI Review button */}
-            <button
-              onClick={handleAIReview}
-              disabled={copying}
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-400 font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-50 mb-3"
-            >
-              <Sparkles size={15} />
-              {copying ? 'Copying…' : '🪄 Get AI Coach Review'}
-            </button>
-
-            {insights.length > 0 && (
-              <div className="flex flex-col gap-2">
-                {insights.map(card => (
+                return (
                   <div
-                    key={card.id}
-                    className={`flex gap-3 p-3.5 rounded-xl border ${
-                      card.severity === 'good' ? 'bg-emerald-500/5 border-emerald-500/20'
-                      : card.severity === 'warn' ? 'bg-amber-500/5 border-amber-500/20'
-                      : 'bg-slate-900 border-slate-800'
-                    }`}
+                    key={row.label}
+                    className={`px-6 py-4 ${i < budgetRows.length - 1 ? 'border-b border-[rgba(255,255,255,0.05)]' : ''}`}
                   >
-                    <span className="text-lg shrink-0">{card.icon}</span>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-200">{card.title}</p>
-                      <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{card.body}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Category donut */}
-          {catChartData.length > 0 && (
-            <section>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">By Category</p>
-              <div className="bg-slate-900 rounded-2xl p-4">
-                <ResponsiveContainer width="100%" height={180}>
-                  <PieChart>
-                    <Pie data={catChartData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value">
-                      {catChartData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value: any) => [typeof value === 'number' ? formatCurrency(value) : '₨ 0', '']}
-                      contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }}
-                      itemStyle={{ color: '#cbd5e1' }}
-                      labelStyle={{ color: '#94a3b8' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2">
-                  {catChartData.map(({ name, value, color }) => (
-                    <div key={name} className="flex items-center gap-2 min-w-0">
-                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                      <span className="text-xs text-slate-400 truncate">{name}</span>
-                      <span className="text-xs text-slate-300 ml-auto shrink-0">{pct(value, total)}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* Type split */}
-          {typeData.length > 0 && (
-            <section>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Needs / Wants / Savings</p>
-              <div className="bg-slate-900 rounded-2xl p-4 flex flex-col gap-3">
-                <div className="flex h-3 rounded-full overflow-hidden gap-0.5">
-                  {typeData.map(({ name, value, color }) => (
-                    <div key={name} style={{ width: `${pct(value, total)}%`, backgroundColor: color }} />
-                  ))}
-                </div>
-                <div className="flex gap-4">
-                  {typeData.map(({ name, value, color }) => (
-                    <div key={name} className="flex flex-col gap-0.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color }}>{name}</span>
-                      <span className="text-sm font-bold text-slate-200">{pct(value, total)}%</span>
-                      <span className="text-xs text-slate-500">{fmt(value)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* Recurring expenses */}
-          {recurring.length > 0 && (
-            <section>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Recurring Expenses</p>
-              <div className="flex flex-col gap-2">
-                {subscriptions.length > 0 && (
-                  <div className="flex items-center justify-between bg-slate-900 rounded-xl px-4 py-3 border border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">🔁</span>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-200">
-                          Subscriptions: {formatCurrency(subscriptionTotal)}/mo
-                        </p>
-                        <p className="text-xs text-slate-500">{subscriptions.length} service{subscriptions.length !== 1 ? 's' : ''}</p>
+                    <div className="flex justify-between items-baseline mb-2.5">
+                      <span className="text-[rgba(255,255,255,0.55)] text-[13px] font-medium">{row.label}</span>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-[rgba(255,255,255,0.78)] text-[13px] font-semibold tabular">
+                          {formatCurrency(row.spent)}
+                        </span>
+                        <span
+                          className="text-[10px] font-medium"
+                          style={{ color: deltaColor }}
+                        >
+                          {pctOfTarget}{over ? ' ↑' : ''}
+                        </span>
                       </div>
                     </div>
+                    {/* 2px progress bar */}
+                    <div className="h-[2px] bg-[rgba(255,255,255,0.05)] rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${barWidth}%`,
+                          backgroundColor: over ? 'rgba(248,113,113,0.55)' : `${row.color}0.5)`,
+                        }}
+                      />
+                    </div>
                   </div>
-                )}
-                {recurring.slice(0, 6).map(item => (
-                  <div key={item.key} className="flex items-center gap-3 bg-slate-900 rounded-xl px-4 py-3">
-                    <span className="text-sm shrink-0">{item.isSubscription ? '🔁' : '📅'}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-200 truncate">{item.note}</p>
-                      <p className="text-xs text-slate-500">
-                        {item.category} · {item.frequency} · {item.monthsSeen} months · {formatCurrency(item.totalSpent)} total
-                      </p>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-[rgba(255,255,255,0.05)]" />
+
+          {/* Top categories */}
+          {catChartData.length > 0 && (
+            <div className="mt-5">
+              <div className="px-6 mb-3">
+                <p className="section-label">Top categories</p>
+              </div>
+              <div className="flex flex-col">
+                {catChartData.slice(0, 6).map((cat, i) => {
+                  const share = pct(cat.value, total)
+                  const barFlex = share
+
+                  return (
+                    <div
+                      key={cat.name}
+                      className={`flex items-center gap-3 px-6 py-3 ${i < Math.min(catChartData.length, 6) - 1 ? 'border-b border-[rgba(255,255,255,0.04)]' : ''}`}
+                    >
+                      {/* Color bar indicator — varying width */}
+                      <div
+                        className="h-[2px] rounded-full shrink-0 transition-all"
+                        style={{
+                          width: `${Math.max(6, barFlex * 2)}px`,
+                          backgroundColor: cat.color,
+                          opacity: 0.6,
+                        }}
+                      />
+                      <span className="text-[rgba(255,255,255,0.55)] text-[12px] flex-1 truncate">{cat.name}</span>
+                      <span className="text-[rgba(255,255,255,0.7)] text-[12px] font-semibold tabular">
+                        {formatCurrency(cat.value)}
+                      </span>
+                      <span className="text-[rgba(255,255,255,0.22)] text-[10px] w-7 text-right tabular">
+                        {share}%
+                      </span>
                     </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className="text-sm font-semibold text-slate-200">{formatCurrency(item.averageAmount)}</span>
-                      <button
-                        onClick={() => handleIgnoreRecurring(item.key)}
-                        className="text-slate-600 hover:text-slate-400"
-                        title="Not recurring"
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Divider */}
+          <div className="h-px bg-[rgba(255,255,255,0.05)]" />
+
+          {/* Notice / Insights */}
+          {insights.length > 0 && (
+            <div className="px-6 pt-5 pb-4">
+              <p className="section-label mb-3">Notice</p>
+              <div className="flex flex-col gap-4">
+                {insights.map(card => (
+                  <div key={card.id}>
+                    <p className="text-[rgba(255,255,255,0.42)] text-[12px] leading-relaxed">
+                      <span
+                        className="font-medium mr-1.5"
+                        style={{
+                          color: card.severity === 'good'
+                            ? 'rgba(74,222,128,0.65)'
+                            : card.severity === 'warn'
+                            ? 'rgba(251,191,36,0.65)'
+                            : 'rgba(255,255,255,0.4)',
+                        }}
                       >
-                        <RotateCcw size={11} />
-                      </button>
-                    </div>
+                        {card.title}.
+                      </span>
+                      {card.body}
+                    </p>
                   </div>
                 ))}
               </div>
-            </section>
+            </div>
           )}
 
-          {/* Daily trend */}
-          {dailyData.length > 1 && (
-            <section>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Daily Spending</p>
-              <div className="bg-slate-900 rounded-2xl p-4">
-                <ResponsiveContainer width="100%" height={120}>
-                  <BarChart data={dailyData} barSize={8}>
-                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#475569' }} axisLine={false} tickLine={false} />
-                    <YAxis hide />
-                    <Tooltip
-                      formatter={(v: any) => [typeof v === 'number' ? formatCurrency(v) : 'Rs 0', 'Spent']}
-                      contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 12 }}
-                      itemStyle={{ color: '#cbd5e1' }}
-                      labelStyle={{ color: '#94a3b8' }}
-                    />
-                    <Bar dataKey="amount" fill="#10b981" radius={[3, 3, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+          {/* Divider */}
+          {insights.length > 0 && <div className="h-px bg-[rgba(255,255,255,0.05)]" />}
+
+          {/* Recurring */}
+          {recurring.length > 0 && (
+            <div className="pt-5">
+              <div className="px-6 mb-3 flex items-center justify-between">
+                <p className="section-label">Recurring</p>
+                {subscriptions.length > 0 && (
+                  <span className="text-[rgba(255,255,255,0.22)] text-[10px] tabular">
+                    {formatCurrency(subscriptionTotal)}/mo
+                  </span>
+                )}
               </div>
-            </section>
+              <div className="flex flex-col">
+                {recurring.slice(0, 6).map((item, i) => (
+                  <div
+                    key={item.key}
+                    className={`flex items-center gap-3 px-6 py-3 ${i < Math.min(recurring.length, 6) - 1 ? 'border-b border-[rgba(255,255,255,0.04)]' : ''}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[rgba(255,255,255,0.6)] text-[13px] font-medium truncate">{item.note}</p>
+                      <p className="text-[rgba(255,255,255,0.22)] text-[10px]">
+                        {item.category}
+                        {item.isSubscription && <span className="ml-1.5 text-[rgba(167,139,250,0.5)]">sub</span>}
+                        {' · '}{item.monthsSeen} months
+                      </p>
+                    </div>
+                    <span className="text-[rgba(255,255,255,0.45)] text-[12px] font-medium tabular">
+                      {formatCurrency(item.averageAmount)}/mo
+                    </span>
+                    <button
+                      onClick={() => handleIgnoreRecurring(item.key)}
+                      className="text-[rgba(255,255,255,0.15)] hover:text-[rgba(255,255,255,0.35)] transition-colors"
+                      title="Not recurring"
+                    >
+                      <RotateCcw size={11} strokeWidth={1.5} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Divider */}
+          {recurring.length > 0 && <div className="h-px bg-[rgba(255,255,255,0.05)]" />}
+
+          {/* Daily bar chart — minimal */}
+          {dailyData.length > 1 && (
+            <div className="px-6 pt-5 pb-2">
+              <p className="section-label mb-4">Daily spending</p>
+              <ResponsiveContainer width="100%" height={100}>
+                <BarChart data={dailyData} barSize={5} barCategoryGap="30%">
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 9, fill: 'rgba(255,255,255,0.18)', fontFamily: 'Inter' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis hide />
+                  <Tooltip
+                    formatter={(v: any) => [typeof v === 'number' ? formatCurrency(v) : 'Rs 0', '']}
+                    contentStyle={{
+                      background: '#111',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: 8,
+                      fontSize: 11,
+                      fontFamily: 'Inter',
+                    }}
+                    itemStyle={{ color: 'rgba(255,255,255,0.6)' }}
+                    labelStyle={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}
+                    cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+                  />
+                  <Bar dataKey="amount" fill="rgba(255,255,255,0.15)" radius={[2, 2, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           )}
 
           {/* Top 5 expenses */}
           {topExpenses.length > 0 && (
-            <section>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Top Expenses</p>
-              <div className="bg-slate-900 rounded-2xl overflow-hidden">
+            <div className="pt-5">
+              <div className="px-6 mb-3">
+                <p className="section-label">Top expenses</p>
+              </div>
+              <div className="flex flex-col">
                 {topExpenses.map((e: Expense, i: number) => (
-                  <div key={e.id} className={`flex items-center gap-3 px-4 py-3 ${i < topExpenses.length - 1 ? 'border-b border-slate-800/60' : ''}`}>
-                    <span className="text-xs font-bold text-slate-600 w-4">#{i + 1}</span>
+                  <div
+                    key={e.id}
+                    className={`flex items-center gap-3 px-6 py-3 ${i < topExpenses.length - 1 ? 'border-b border-[rgba(255,255,255,0.04)]' : ''}`}
+                  >
+                    <span className="text-[rgba(255,255,255,0.15)] text-[10px] font-medium w-4 tabular">
+                      #{i + 1}
+                    </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-200">{e.category}</p>
-                      {e.note && <p className="text-xs text-slate-500 truncate">{e.note}</p>}
+                      <p className="text-[rgba(255,255,255,0.6)] text-[13px] font-medium truncate">{e.category}</p>
+                      {e.note && <p className="text-[rgba(255,255,255,0.22)] text-[10px] truncate">{e.note}</p>}
                     </div>
                     <div className="flex flex-col items-end gap-0.5 shrink-0">
-                      <span className="text-sm font-semibold text-slate-100">{formatCurrency(e.amount)}</span>
-                      <span className="text-[10px] text-slate-600">{e.date.slice(5)}</span>
+                      <span className="text-[rgba(255,255,255,0.7)] text-[13px] font-semibold tabular">
+                        {formatCurrency(e.amount)}
+                      </span>
+                      <span className="text-[rgba(255,255,255,0.18)] text-[10px]">{e.date.slice(5)}</span>
                     </div>
                   </div>
                 ))}
               </div>
-            </section>
+            </div>
           )}
         </>
       )}
 
       {/* Toast */}
       {toastMsg && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium px-4 py-3 rounded-xl shadow-xl max-w-[320px] text-center">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-[#111] border border-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.7)] text-xs font-medium px-4 py-3 rounded-xl shadow-xl max-w-[300px] text-center">
           {toastMsg}
         </div>
       )}
