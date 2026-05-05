@@ -11,6 +11,7 @@ import {
 import { db } from '@/db/db'
 import { formatCurrency } from '@/lib/categories'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/lib/theme'
 
 function clamp(n: number) {
   return Math.max(0, Math.min(100, n))
@@ -18,6 +19,7 @@ function clamp(n: number) {
 
 export default function Settings() {
   const navigate = useNavigate()
+  const { theme, setTheme } = useTheme()
   const [income, setIncome] = useState('')
   const [splits, setSplits] = useState<BudgetSplits>({ needs: 50, wants: 30, savings: 20 })
   const [editingSplits, setEditingSplits] = useState(false)
@@ -103,6 +105,29 @@ export default function Settings() {
       {/* Page header */}
       <div className="px-6 pt-5 pb-0">
         <p className="text-[rgba(var(--fg),0.85)] text-[20px] font-[700] tracking-[-0.8px]">Settings</p>
+      </div>
+
+      {/* Appearance */}
+      <div className="px-6 pt-5 pb-0">
+        <p className="section-label mb-3">Appearance</p>
+      </div>
+      <div className="px-6 pb-5 border-b border-[rgba(var(--fg),0.05)]">
+        <div className="flex bg-[rgba(var(--fg),0.03)] border border-[rgba(var(--fg),0.06)] rounded-xl p-1 gap-1">
+          {(['dark', 'light'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTheme(t)}
+              className={cn(
+                'flex-1 py-2.5 rounded-lg text-sm font-medium transition-all capitalize',
+                theme === t
+                  ? 'bg-[rgba(var(--fg),0.08)] text-[rgba(var(--fg),0.85)]'
+                  : 'text-[rgba(var(--fg),0.40)]'
+              )}
+            >
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Income */}

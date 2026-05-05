@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ChevronLeft, ChevronRight, RotateCcw, Sparkles } from 'lucide-react'
+import { useTheme } from '@/lib/theme'
 import {
   BarChart, Bar, XAxis, YAxis,
   ResponsiveContainer, Tooltip,
@@ -29,6 +30,16 @@ export default function Insights() {
   const [copying, setCopying] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
   const [ignoredKeys, setIgnoredKeys] = useState<Set<string>>(new Set())
+  const { theme } = useTheme()
+
+  // Recharts colors — must be resolved values (SVG attributes don't support CSS vars)
+  const chartBarFill    = theme === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.10)'
+  const chartTickFill   = theme === 'dark' ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.42)'
+  const chartTooltipBg  = theme === 'dark' ? '#0f0f0f' : '#ffffff'
+  const chartTooltipBorder = theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
+  const chartItemColor  = theme === 'dark' ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)'
+  const chartLabelColor = theme === 'dark' ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.42)'
+  const chartCursorFill = theme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)'
 
   const income = getMonthlyIncome()
   const splits = getBudgetSplits()
@@ -370,7 +381,7 @@ export default function Insights() {
                 <BarChart data={dailyData} barSize={5} barCategoryGap="30%">
                   <XAxis
                     dataKey="date"
-                    tick={{ fontSize: 9, fill: 'rgba(var(--fg),0.18)', fontFamily: 'Inter' }}
+                    tick={{ fontSize: 9, fill: chartTickFill, fontFamily: 'Inter' }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -378,17 +389,17 @@ export default function Insights() {
                   <Tooltip
                     formatter={(v: any) => [typeof v === 'number' ? formatCurrency(v) : 'Rs 0', '']}
                     contentStyle={{
-                      background: 'var(--bg-surface)',
-                      border: '1px solid rgba(var(--fg),0.08)',
+                      background: chartTooltipBg,
+                      border: `1px solid ${chartTooltipBorder}`,
                       borderRadius: 8,
                       fontSize: 11,
                       fontFamily: 'Inter',
                     }}
-                    itemStyle={{ color: 'rgba(var(--fg),0.6)' }}
-                    labelStyle={{ color: 'rgba(var(--fg),0.3)', fontSize: 10 }}
-                    cursor={{ fill: 'rgba(var(--fg),0.02)' }}
+                    itemStyle={{ color: chartItemColor }}
+                    labelStyle={{ color: chartLabelColor, fontSize: 10 }}
+                    cursor={{ fill: chartCursorFill }}
                   />
-                  <Bar dataKey="amount" fill="rgba(var(--fg),0.15)" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="amount" fill={chartBarFill} radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
