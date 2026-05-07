@@ -52,6 +52,38 @@ export async function removeAdjustment(year: number, month: number, adjustmentId
   })
 }
 
+export async function addTransfer(
+  year: number,
+  month: number,
+  amount: number,
+  direction: 'digital-to-cash' | 'cash-to-digital',
+  note: string,
+): Promise<void> {
+  const record = await getWalletForMonth(year, month)
+  if (!record) return
+
+  const groupId = crypto.randomUUID()
+  const createdAt = new Date().toISOString()
+  const [cashAmount, digitalAmount] =
+    direction === 'digital-to-cash' ? [amount, -amount] : [-amount, amount]
+
+  await db.walletBalances.update(record.id, {
+    adjustments: [
+      ...record.adjustments,
+      { id: crypto.randomUUID(), amount: cashAmount,    note, method: 'cash',    createdAt, transferGroupId: groupId },
+      { id: crypto.randomUUID(), amount: digitalAmount, note, method: 'digital', createdAt, transferGroupId: groupId },
+    ],
+  })
+}
+
+export async function removeTransferGroup(year: number, month: number, groupId: string): Promise<void> {
+  const record = await getWalletForMonth(year, month)
+  if (!record) return
+  await db.walletBalances.update(record.id, {
+    adjustments: record.adjustments.filter(a => a.transferGroupId !== groupId),
+  })
+}
+
 export interface CurrentBalances {
   cash: number
   digital: number

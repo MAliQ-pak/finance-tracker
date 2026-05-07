@@ -40,6 +40,7 @@ export interface WalletAdjustment {
   note: string
   method: 'cash' | 'digital'
   createdAt: string
+  transferGroupId?: string  // present on both halves of a Cash↔Digital transfer
 }
 
 export interface WalletBalance {

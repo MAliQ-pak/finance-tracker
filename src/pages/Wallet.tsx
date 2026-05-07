@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, ArrowRightLeft } from 'lucide-react'
 import {
   getWalletForMonth,
   setStartingBalances,
   addAdjustment,
   removeAdjustment,
+  addTransfer,
+  removeTransferGroup,
   calculateCurrentBalances,
   DIGITAL_METHODS,
   type CurrentBalances,
@@ -22,12 +24,64 @@ const MONTH = now.getMonth() + 1
 const MONTH_STR = `${YEAR}-${String(MONTH).padStart(2, '0')}`
 const MONTH_LABEL = now.toLocaleString('default', { month: 'long', year: 'numeric' })
 
-interface ActivityItem {
-  date: string
-  amount: number
-  method: 'cash' | 'digital'
-  label: string
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type Direction = 'digital-to-cash' | 'cash-to-digital'
+
+type ActivityItem =
+  | { kind: 'regular';  date: string; amount: number; method: 'cash' | 'digital'; label: string }
+  | { kind: 'transfer'; date: string; amount: number; direction: Direction; label: string; transferGroupId: string }
+
+type AdjRow =
+  | { kind: 'regular';  adj: WalletAdjustment }
+  | { kind: 'transfer'; cash: WalletAdjustment; digital: WalletAdjustment; groupId: string; amount: number; direction: Direction }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function groupAdjustments(adjustments: WalletAdjustment[]): AdjRow[] {
+  const transferMap = new Map<string, WalletAdjustment[]>()
+  const rows: AdjRow[] = []
+
+  for (const adj of adjustments) {
+    if (adj.transferGroupId) {
+      const g = transferMap.get(adj.transferGroupId) ?? []
+      g.push(adj)
+      transferMap.set(adj.transferGroupId, g)
+    } else {
+      rows.push({ kind: 'regular', adj })
+    }
+  }
+
+  for (const [groupId, adjs] of transferMap) {
+    const cash    = adjs.find(a => a.method === 'cash')
+    const digital = adjs.find(a => a.method === 'digital')
+    if (cash && digital) {
+      rows.push({
+        kind: 'transfer',
+        cash,
+        digital,
+        groupId,
+        amount: Math.abs(cash.amount),
+        direction: cash.amount > 0 ? 'digital-to-cash' : 'cash-to-digital',
+      })
+    } else {
+      // Malformed (only one half) — render each as plain entry
+      for (const adj of adjs) rows.push({ kind: 'regular', adj })
+    }
+  }
+
+  return rows.sort((a, b) => {
+    const da = a.kind === 'transfer' ? a.cash.createdAt : a.adj.createdAt
+    const db_ = b.kind === 'transfer' ? b.cash.createdAt : b.adj.createdAt
+    return db_.localeCompare(da)
+  })
 }
+
+function dirLabel(d: Direction) {
+  return d === 'digital-to-cash' ? 'Digital → Cash' : 'Cash → Digital'
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Wallet() {
   const walletRecord = useLiveQuery(
@@ -52,44 +106,61 @@ export default function Wallet() {
     if (!walletRecord) return []
 
     const items: ActivityItem[] = []
+    const transferMap = new Map<string, WalletAdjustment[]>()
 
     for (const adj of walletRecord.adjustments) {
-      items.push({
-        date: adj.createdAt.slice(0, 10),
-        amount: adj.amount,
-        method: adj.method,
-        label: adj.note || (adj.amount >= 0 ? 'Income deposit' : 'Adjustment'),
-      })
+      if (adj.transferGroupId) {
+        const g = transferMap.get(adj.transferGroupId) ?? []
+        g.push(adj)
+        transferMap.set(adj.transferGroupId, g)
+      } else {
+        items.push({
+          kind: 'regular',
+          date: adj.createdAt.slice(0, 10),
+          amount: adj.amount,
+          method: adj.method,
+          label: adj.note || (adj.amount >= 0 ? 'Income deposit' : 'Adjustment'),
+        })
+      }
+    }
+
+    for (const [groupId, adjs] of transferMap) {
+      const cash    = adjs.find(a => a.method === 'cash')
+      const digital = adjs.find(a => a.method === 'digital')
+      if (cash && digital) {
+        const dir: Direction = cash.amount > 0 ? 'digital-to-cash' : 'cash-to-digital'
+        items.push({
+          kind: 'transfer',
+          date: cash.createdAt.slice(0, 10),
+          amount: Math.abs(cash.amount),
+          direction: dir,
+          label: cash.note || dirLabel(dir),
+          transferGroupId: groupId,
+        })
+      } else {
+        for (const adj of adjs) {
+          items.push({ kind: 'regular', date: adj.createdAt.slice(0, 10), amount: adj.amount, method: adj.method, label: adj.note || 'Transfer' })
+        }
+      }
     }
 
     for (const e of monthExpenses) {
       if (e.paymentMethod === 'Cash') {
-        items.push({
-          date: e.date,
-          amount: -e.amount,
-          method: 'cash',
-          label: e.note ? `${e.category}: ${e.note}` : e.category,
-        })
+        items.push({ kind: 'regular', date: e.date, amount: -e.amount, method: 'cash',    label: e.note ? `${e.category}: ${e.note}` : e.category })
       } else if (DIGITAL_METHODS.includes(e.paymentMethod)) {
-        items.push({
-          date: e.date,
-          amount: -e.amount,
-          method: 'digital',
-          label: e.note ? `${e.category}: ${e.note}` : e.category,
-        })
+        items.push({ kind: 'regular', date: e.date, amount: -e.amount, method: 'digital', label: e.note ? `${e.category}: ${e.note}` : e.category })
       }
     }
 
     return items.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
   }, [walletRecord, monthExpenses])
 
-  const [setupOpen, setSetupOpen] = useState(false)
-  const [incomeOpen, setIncomeOpen] = useState(false)
-  const [adjOpen, setAdjOpen] = useState(false)
+  const [setupOpen,    setSetupOpen]    = useState(false)
+  const [incomeOpen,   setIncomeOpen]   = useState(false)
+  const [transferOpen, setTransferOpen] = useState(false)
+  const [adjOpen,      setAdjOpen]      = useState(false)
 
-  if (walletRecord === undefined) {
-    return <div className="flex-1" />
-  }
+  if (walletRecord === undefined) return <div className="flex-1" />
 
   if (!walletRecord) {
     return (
@@ -145,7 +216,7 @@ export default function Wallet() {
         <div className="px-6 pt-4 pb-2">
           <p className="section-label">Breakdown</p>
         </div>
-        <BalanceRow label="Cash" value={balances?.cash ?? 0} />
+        <BalanceRow label="Cash"    value={balances?.cash    ?? 0} />
         <BalanceRow label="Digital" value={balances?.digital ?? 0} />
 
         {/* Income deposit button */}
@@ -175,21 +246,30 @@ export default function Wallet() {
           </>
         )}
 
-        {/* Adjustments */}
+        {/* Adjustments header */}
         <div className="flex items-center justify-between px-6 pt-4 pb-2">
           <p className="section-label">Adjustments</p>
-          <button
-            onClick={() => setAdjOpen(true)}
-            className="flex items-center gap-1 text-[rgba(var(--fg),0.55)] text-xs active:text-[rgba(var(--fg),0.80)] transition-colors"
-          >
-            <Plus size={12} strokeWidth={2} />
-            Add
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setTransferOpen(true)}
+              className="flex items-center gap-1 text-[rgba(var(--fg),0.55)] text-xs active:text-[rgba(var(--fg),0.80)] transition-colors"
+            >
+              <ArrowRightLeft size={11} strokeWidth={1.5} />
+              Transfer
+            </button>
+            <button
+              onClick={() => setAdjOpen(true)}
+              className="flex items-center gap-1 text-[rgba(var(--fg),0.55)] text-xs active:text-[rgba(var(--fg),0.80)] transition-colors"
+            >
+              <Plus size={12} strokeWidth={2} />
+              Add
+            </button>
+          </div>
         </div>
 
         {walletRecord.adjustments.length === 0 ? (
           <p className="px-6 pb-3 text-[rgba(var(--fg),0.35)] text-xs">
-            No adjustments yet — income deposits and corrections appear here.
+            No adjustments yet — income deposits and transfers appear here.
           </p>
         ) : (
           <AdjustmentList adjustments={walletRecord.adjustments} year={YEAR} month={MONTH} />
@@ -226,14 +306,19 @@ export default function Wallet() {
         year={YEAR}
         month={MONTH}
       />
-
       <IncomeDepositSheet
         open={incomeOpen}
         onClose={() => setIncomeOpen(false)}
         year={YEAR}
         month={MONTH}
       />
-
+      <TransferSheet
+        open={transferOpen}
+        onClose={() => setTransferOpen(false)}
+        year={YEAR}
+        month={MONTH}
+        balances={balances}
+      />
       <AddAdjustmentSheet
         open={adjOpen}
         onClose={() => setAdjOpen(false)}
@@ -252,7 +337,6 @@ function WalletEmpty({ onSetup }: { onSetup: () => void }) {
       <div className="flex items-center justify-between px-6 pt-5 pb-0">
         <span className="text-[rgba(var(--fg),0.65)] text-xs font-medium">{MONTH_LABEL}</span>
       </div>
-
       <div className="flex flex-col items-center justify-center gap-4 py-20 px-8 text-center">
         <p className="text-[rgba(var(--fg),0.80)] text-sm font-semibold">Set up your wallet</p>
         <p className="text-[rgba(var(--fg),0.48)] text-xs leading-relaxed max-w-[260px]">
@@ -274,26 +358,39 @@ function BalanceRow({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center justify-between px-6 py-3.5 border-b border-[rgba(var(--fg),0.05)]">
       <span className="text-[rgba(var(--fg),0.65)] text-sm">{label}</span>
-      <span
-        className={cn(
-          'text-sm font-semibold tabular',
-          negative ? 'text-[rgba(var(--rgb-warn),0.80)]' : 'text-[rgba(var(--fg),0.82)]'
-        )}
-      >
-        {negative
-          ? `${formatCurrency(Math.abs(value))} over`
-          : formatCurrency(value)}
+      <span className={cn('text-sm font-semibold tabular', negative ? 'text-[rgba(var(--rgb-warn),0.80)]' : 'text-[rgba(var(--fg),0.82)]')}>
+        {negative ? `${formatCurrency(Math.abs(value))} over` : formatCurrency(value)}
       </span>
     </div>
   )
 }
 
 function ActivityRow({ item }: { item: ActivityItem }) {
-  const positive = item.amount >= 0
   const dateStr = new Date(item.date + 'T00:00:00').toLocaleDateString('default', {
-    month: 'short',
-    day: 'numeric',
+    month: 'short', day: 'numeric',
   })
+
+  if (item.kind === 'transfer') {
+    return (
+      <div className="flex items-center gap-4 px-6 py-3 border-b border-[rgba(var(--fg),0.04)]">
+        <div className="flex-1 min-w-0">
+          <p className="text-[rgba(var(--fg),0.75)] text-[13px] font-medium leading-snug truncate">
+            {item.label}
+          </p>
+          <p className="text-[rgba(var(--fg),0.38)] text-[11px] flex items-center gap-1">
+            {dateStr} ·
+            <ArrowRightLeft size={9} strokeWidth={1.5} className="inline shrink-0" />
+            {dirLabel(item.direction)}
+          </p>
+        </div>
+        <span className="text-[rgba(var(--fg),0.60)] text-[13px] font-semibold tabular shrink-0">
+          {formatCurrency(item.amount)}
+        </span>
+      </div>
+    )
+  }
+
+  const positive = item.amount >= 0
   return (
     <div className="flex items-center gap-4 px-6 py-3 border-b border-[rgba(var(--fg),0.04)]">
       <div className="flex-1 min-w-0">
@@ -304,12 +401,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
           {dateStr} · {item.method}
         </p>
       </div>
-      <span
-        className={cn(
-          'text-[13px] font-semibold tabular shrink-0',
-          positive ? 'text-[rgba(var(--rgb-savings),0.75)]' : 'text-[rgba(var(--fg),0.60)]'
-        )}
-      >
+      <span className={cn('text-[13px] font-semibold tabular shrink-0', positive ? 'text-[rgba(var(--rgb-savings),0.75)]' : 'text-[rgba(var(--fg),0.60)]')}>
         {positive ? '+' : '−'}{formatCurrency(Math.abs(item.amount))}
       </span>
     </div>
@@ -325,42 +417,65 @@ function AdjustmentList({
   year: number
   month: number
 }) {
-  async function handleDelete(id: string) {
-    await removeAdjustment(year, month, id)
-  }
+  const rows = useMemo(() => groupAdjustments(adjustments), [adjustments])
 
   return (
     <div>
-      {adjustments.map(adj => (
-        <div
-          key={adj.id}
-          className="flex items-center gap-4 px-6 py-3.5 border-b border-[rgba(var(--fg),0.05)]"
-        >
-          <div className="flex-1 min-w-0">
-            <p className="text-[rgba(var(--fg),0.75)] text-[13px] font-medium leading-snug truncate">
-              {adj.note || (adj.amount >= 0 ? 'Income deposit' : 'Adjustment')}
-            </p>
-            <p className="text-[rgba(var(--fg),0.38)] text-[11px] capitalize">{adj.method}</p>
+      {rows.map(row => {
+        if (row.kind === 'transfer') {
+          return (
+            <div
+              key={row.groupId}
+              className="flex items-center gap-4 px-6 py-3.5 border-b border-[rgba(var(--fg),0.05)]"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-[rgba(var(--fg),0.75)] text-[13px] font-medium leading-snug truncate">
+                  {row.cash.note || dirLabel(row.direction)}
+                </p>
+                <p className="text-[rgba(var(--fg),0.38)] text-[11px] flex items-center gap-1">
+                  <ArrowRightLeft size={9} strokeWidth={1.5} className="shrink-0" />
+                  {dirLabel(row.direction)}
+                </p>
+              </div>
+              <span className="text-[rgba(var(--fg),0.60)] text-[13px] font-semibold tabular shrink-0">
+                {formatCurrency(row.amount)}
+              </span>
+              <button
+                onClick={() => removeTransferGroup(year, month, row.groupId)}
+                className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(var(--fg),0.30)] active:text-[rgba(var(--rgb-warn),0.70)] active:bg-[rgba(var(--rgb-warn),0.05)] transition-colors shrink-0"
+                aria-label="Remove transfer"
+              >
+                <Trash2 size={13} strokeWidth={1.5} />
+              </button>
+            </div>
+          )
+        }
+
+        const adj = row.adj
+        return (
+          <div
+            key={adj.id}
+            className="flex items-center gap-4 px-6 py-3.5 border-b border-[rgba(var(--fg),0.05)]"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-[rgba(var(--fg),0.75)] text-[13px] font-medium leading-snug truncate">
+                {adj.note || (adj.amount >= 0 ? 'Income deposit' : 'Adjustment')}
+              </p>
+              <p className="text-[rgba(var(--fg),0.38)] text-[11px] capitalize">{adj.method}</p>
+            </div>
+            <span className={cn('text-[13px] font-semibold tabular shrink-0', adj.amount >= 0 ? 'text-[rgba(var(--rgb-savings),0.75)]' : 'text-[rgba(var(--rgb-warn),0.75)]')}>
+              {adj.amount >= 0 ? '+' : '−'}{formatCurrency(Math.abs(adj.amount))}
+            </span>
+            <button
+              onClick={() => removeAdjustment(year, month, adj.id)}
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(var(--fg),0.30)] active:text-[rgba(var(--rgb-warn),0.70)] active:bg-[rgba(var(--rgb-warn),0.05)] transition-colors shrink-0"
+              aria-label="Remove adjustment"
+            >
+              <Trash2 size={13} strokeWidth={1.5} />
+            </button>
           </div>
-
-          <span
-            className={cn(
-              'text-[13px] font-semibold tabular',
-              adj.amount >= 0 ? 'text-[rgba(var(--rgb-savings),0.75)]' : 'text-[rgba(var(--rgb-warn),0.75)]'
-            )}
-          >
-            {adj.amount >= 0 ? '+' : '−'}{formatCurrency(Math.abs(adj.amount))}
-          </span>
-
-          <button
-            onClick={() => handleDelete(adj.id)}
-            className="flex items-center justify-center w-7 h-7 rounded-lg text-[rgba(var(--fg),0.30)] active:text-[rgba(var(--rgb-warn),0.70)] active:bg-[rgba(var(--rgb-warn),0.05)] transition-colors shrink-0"
-            aria-label="Remove adjustment"
-          >
-            <Trash2 size={13} strokeWidth={1.5} />
-          </button>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
@@ -368,25 +483,17 @@ function AdjustmentList({
 // ─── Sheets ───────────────────────────────────────────────────────────────────
 
 function SetupSheet({
-  open,
-  onClose,
-  initialCash,
-  initialDigital,
-  year,
-  month,
+  open, onClose, initialCash, initialDigital, year, month,
 }: {
-  open: boolean
-  onClose: () => void
-  initialCash: number
-  initialDigital: number
-  year: number
-  month: number
+  open: boolean; onClose: () => void
+  initialCash: number; initialDigital: number
+  year: number; month: number
 }) {
-  const [cash, setCash] = useState(initialCash ? String(initialCash) : '')
+  const [cash,    setCash]    = useState(initialCash    ? String(initialCash)    : '')
   const [digital, setDigital] = useState(initialDigital ? String(initialDigital) : '')
 
   useMemo(() => {
-    setCash(initialCash ? String(initialCash) : '')
+    setCash(initialCash       ? String(initialCash)    : '')
     setDigital(initialDigital ? String(initialDigital) : '')
   }, [initialCash, initialDigital, open])
 
@@ -399,11 +506,8 @@ function SetupSheet({
     <Sheet open={open} onClose={onClose}>
       <div className="px-6 pb-4 border-b border-[rgba(var(--fg),0.05)]">
         <p className="text-[rgba(var(--fg),0.85)] text-base font-semibold">Starting balances</p>
-        <p className="text-[rgba(var(--fg),0.45)] text-xs mt-1">
-          How much do you have right now, at the start of the month?
-        </p>
+        <p className="text-[rgba(var(--fg),0.45)] text-xs mt-1">How much do you have right now, at the start of the month?</p>
       </div>
-
       <div className="px-6 pt-5 flex flex-col gap-5">
         <div>
           <AmountField label="Cash on hand" value={cash} onChange={setCash} placeholder="0" />
@@ -411,20 +515,14 @@ function SetupSheet({
         </div>
         <div>
           <AmountField label="Digital balance" value={digital} onChange={setDigital} placeholder="0" />
-          <p className="mt-1.5 text-[rgba(var(--fg),0.38)] text-[11px]">
-            Total across bank accounts, JazzCash, EasyPaisa, etc. right now
-          </p>
+          <p className="mt-1.5 text-[rgba(var(--fg),0.38)] text-[11px]">Total across bank accounts, JazzCash, EasyPaisa, etc.</p>
         </div>
         <p className="text-[rgba(var(--fg),0.38)] text-[11px] leading-relaxed -mt-1">
           Salary arriving this month? Add it via the Income deposit button after setup.
         </p>
       </div>
-
       <div className="px-6 pt-5 pb-8">
-        <button
-          onClick={handleSave}
-          className="w-full py-3.5 rounded-xl bg-[rgba(var(--fg),0.9)] text-[var(--btn-primary-text)] text-sm font-semibold active:scale-[0.98] transition-transform"
-        >
+        <button onClick={handleSave} className="w-full py-3.5 rounded-xl bg-[rgba(var(--fg),0.9)] text-[var(--btn-primary-text)] text-sm font-semibold active:scale-[0.98] transition-transform">
           Save
         </button>
       </div>
@@ -433,88 +531,53 @@ function SetupSheet({
 }
 
 function IncomeDepositSheet({
-  open,
-  onClose,
-  year,
-  month,
+  open, onClose, year, month,
 }: {
-  open: boolean
-  onClose: () => void
-  year: number
-  month: number
+  open: boolean; onClose: () => void; year: number; month: number
 }) {
   const [amount, setAmount] = useState('')
-  const [note, setNote] = useState('')
+  const [note,   setNote]   = useState('')
   const [method, setMethod] = useState<'cash' | 'digital'>('digital')
 
-  function reset() {
-    setAmount('')
-    setNote('')
-    setMethod('digital')
-  }
+  function reset() { setAmount(''); setNote(''); setMethod('digital') }
 
   async function handleSave() {
     const raw = parseFloat(amount)
     if (!raw || isNaN(raw) || raw <= 0) return
-    await addAdjustment(year, month, { amount: Math.abs(raw), note, method })
-    reset()
-    onClose()
-  }
-
-  function handleClose() {
-    reset()
-    onClose()
+    await addAdjustment(year, month, { amount: raw, note, method })
+    reset(); onClose()
   }
 
   return (
-    <Sheet open={open} onClose={handleClose}>
+    <Sheet open={open} onClose={() => { reset(); onClose() }}>
       <div className="px-6 pb-4 border-b border-[rgba(var(--fg),0.05)]">
         <p className="text-[rgba(var(--fg),0.85)] text-base font-semibold">Income deposit</p>
-        <p className="text-[rgba(var(--fg),0.45)] text-xs mt-1">
-          Record salary, freelance payment, or any money coming in
-        </p>
+        <p className="text-[rgba(var(--fg),0.45)] text-xs mt-1">Record salary, freelance payment, or any money coming in</p>
       </div>
-
       <div className="px-6 pt-5 flex flex-col gap-4">
         <div>
           <p className="section-label mb-2">Deposited into</p>
           <div className="flex bg-[rgba(var(--fg),0.03)] border border-[rgba(var(--fg),0.06)] rounded-xl p-1 gap-1">
             {(['digital', 'cash'] as const).map(m => (
-              <button
-                key={m}
-                onClick={() => setMethod(m)}
-                className={cn(
-                  'flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize',
-                  method === m
-                    ? 'bg-[rgba(var(--fg),0.08)] text-[rgba(var(--fg),0.85)]'
-                    : 'text-[rgba(var(--fg),0.40)]'
-                )}
-              >
+              <button key={m} onClick={() => setMethod(m)}
+                className={cn('flex-1 py-2 rounded-lg text-sm font-medium transition-all',
+                  method === m ? 'bg-[rgba(var(--fg),0.08)] text-[rgba(var(--fg),0.85)]' : 'text-[rgba(var(--fg),0.40)]')}>
                 {m === 'digital' ? 'Bank / Mobile' : 'Cash'}
               </button>
             ))}
           </div>
         </div>
-
         <AmountField label="Amount" value={amount} onChange={setAmount} placeholder="0" />
-
         <div>
           <p className="section-label mb-2">Note (optional)</p>
-          <input
-            value={note}
-            onChange={e => setNote(e.target.value)}
+          <input value={note} onChange={e => setNote(e.target.value)}
             placeholder="e.g. May salary, freelance payment"
-            className="w-full bg-[rgba(var(--fg),0.03)] border border-[rgba(var(--fg),0.06)] rounded-xl px-4 py-3 text-sm text-[rgba(var(--fg),0.82)] placeholder:text-[rgba(var(--fg),0.28)] outline-none focus:border-[rgba(var(--fg),0.15)] transition-colors"
-          />
+            className="w-full bg-[rgba(var(--fg),0.03)] border border-[rgba(var(--fg),0.06)] rounded-xl px-4 py-3 text-sm text-[rgba(var(--fg),0.82)] placeholder:text-[rgba(var(--fg),0.28)] outline-none focus:border-[rgba(var(--fg),0.15)] transition-colors" />
         </div>
       </div>
-
       <div className="px-6 pt-5 pb-8">
-        <button
-          onClick={handleSave}
-          disabled={!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0}
-          className="w-full py-3.5 rounded-xl bg-[rgba(var(--fg),0.9)] text-[var(--btn-primary-text)] text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-40"
-        >
+        <button onClick={handleSave} disabled={!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0}
+          className="w-full py-3.5 rounded-xl bg-[rgba(var(--fg),0.9)] text-[var(--btn-primary-text)] text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-40">
           Save deposit
         </button>
       </div>
@@ -522,109 +585,161 @@ function IncomeDepositSheet({
   )
 }
 
-function AddAdjustmentSheet({
-  open,
-  onClose,
-  year,
-  month,
+function TransferSheet({
+  open, onClose, year, month, balances,
 }: {
-  open: boolean
-  onClose: () => void
-  year: number
-  month: number
+  open: boolean; onClose: () => void; year: number; month: number
+  balances: CurrentBalances | null | undefined
 }) {
-  const [amount, setAmount] = useState('')
-  const [note, setNote] = useState('')
-  const [method, setMethod] = useState<'cash' | 'digital'>('cash')
-  const [sign, setSign] = useState<'in' | 'out'>('in')
+  const [amount,    setAmount]    = useState('')
+  const [direction, setDirection] = useState<Direction>('digital-to-cash')
+  const [note,      setNote]      = useState('ATM Withdrawal')
+
+  function handleDirectionChange(d: Direction) {
+    setDirection(d)
+    setNote(d === 'digital-to-cash' ? 'ATM Withdrawal' : 'Bank Deposit')
+  }
 
   function reset() {
     setAmount('')
-    setNote('')
-    setMethod('cash')
-    setSign('in')
+    setDirection('digital-to-cash')
+    setNote('ATM Withdrawal')
   }
+
+  const rawAmount = parseFloat(amount) || 0
+  const sourceBalance = direction === 'digital-to-cash'
+    ? (balances?.digital ?? 0)
+    : (balances?.cash    ?? 0)
+  const afterBalance    = sourceBalance - rawAmount
+  const wouldGoNegative = rawAmount > 0 && afterBalance < 0
+  const sourceLabel     = direction === 'digital-to-cash' ? 'Digital' : 'Cash'
+
+  const canSave = rawAmount > 0 && !isNaN(rawAmount)
+
+  async function handleSave() {
+    if (!canSave) return
+    await addTransfer(year, month, rawAmount, direction, note)
+    reset(); onClose()
+  }
+
+  return (
+    <Sheet open={open} onClose={() => { reset(); onClose() }}>
+      <div className="px-6 pb-4 border-b border-[rgba(var(--fg),0.05)]">
+        <p className="text-[rgba(var(--fg),0.85)] text-base font-semibold">Transfer</p>
+      </div>
+      <div className="px-6 pt-5 flex flex-col gap-4">
+        {/* Direction */}
+        <div>
+          <p className="section-label mb-2">Direction</p>
+          <div className="flex bg-[rgba(var(--fg),0.03)] border border-[rgba(var(--fg),0.06)] rounded-xl p-1 gap-1">
+            {(['digital-to-cash', 'cash-to-digital'] as const).map(d => (
+              <button key={d} onClick={() => handleDirectionChange(d)}
+                className={cn('flex-1 py-2 rounded-lg text-sm font-medium transition-all',
+                  direction === d ? 'bg-[rgba(var(--fg),0.08)] text-[rgba(var(--fg),0.85)]' : 'text-[rgba(var(--fg),0.40)]')}>
+                {d === 'digital-to-cash' ? 'Digital → Cash' : 'Cash → Digital'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Amount */}
+        <div>
+          <AmountField label="Amount" value={amount} onChange={setAmount} placeholder="0" />
+          {wouldGoNegative && (
+            <p className="mt-1.5 text-[rgba(var(--rgb-warn),0.70)] text-[11px]">
+              This will leave your {sourceLabel} balance at {formatCurrency(afterBalance)}
+            </p>
+          )}
+        </div>
+
+        {/* Reason */}
+        <div>
+          <p className="section-label mb-2">Reason</p>
+          <input value={note} onChange={e => setNote(e.target.value)}
+            placeholder="ATM Withdrawal"
+            className="w-full bg-[rgba(var(--fg),0.03)] border border-[rgba(var(--fg),0.06)] rounded-xl px-4 py-3 text-sm text-[rgba(var(--fg),0.82)] placeholder:text-[rgba(var(--fg),0.28)] outline-none focus:border-[rgba(var(--fg),0.15)] transition-colors" />
+        </div>
+      </div>
+
+      <div className="px-6 pt-5 pb-8 flex gap-3">
+        <button
+          onClick={() => { reset(); onClose() }}
+          className="flex-1 py-3.5 rounded-xl border border-[rgba(var(--fg),0.08)] text-[rgba(var(--fg),0.55)] text-sm font-medium active:bg-[rgba(var(--fg),0.03)] transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={!canSave}
+          className="flex-1 py-3.5 rounded-xl bg-[rgba(var(--fg),0.9)] text-[var(--btn-primary-text)] text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-40"
+        >
+          Save transfer
+        </button>
+      </div>
+    </Sheet>
+  )
+}
+
+function AddAdjustmentSheet({
+  open, onClose, year, month,
+}: {
+  open: boolean; onClose: () => void; year: number; month: number
+}) {
+  const [amount, setAmount] = useState('')
+  const [note,   setNote]   = useState('')
+  const [method, setMethod] = useState<'cash' | 'digital'>('cash')
+  const [sign,   setSign]   = useState<'in' | 'out'>('in')
+
+  function reset() { setAmount(''); setNote(''); setMethod('cash'); setSign('in') }
 
   async function handleAdd() {
     const raw = parseFloat(amount)
     if (!raw || isNaN(raw)) return
-    const finalAmount = sign === 'out' ? -Math.abs(raw) : Math.abs(raw)
-    await addAdjustment(year, month, { amount: finalAmount, note, method })
-    reset()
-    onClose()
-  }
-
-  function handleClose() {
-    reset()
-    onClose()
+    await addAdjustment(year, month, { amount: sign === 'out' ? -Math.abs(raw) : Math.abs(raw), note, method })
+    reset(); onClose()
   }
 
   return (
-    <Sheet open={open} onClose={handleClose}>
+    <Sheet open={open} onClose={() => { reset(); onClose() }}>
       <div className="px-6 pb-4 border-b border-[rgba(var(--fg),0.05)]">
         <p className="text-[rgba(var(--fg),0.85)] text-base font-semibold">Manual adjustment</p>
       </div>
-
       <div className="px-6 pt-5 flex flex-col gap-4">
         <div>
           <p className="section-label mb-2">Direction</p>
           <div className="flex bg-[rgba(var(--fg),0.03)] border border-[rgba(var(--fg),0.06)] rounded-xl p-1 gap-1">
             {(['in', 'out'] as const).map(s => (
-              <button
-                key={s}
-                onClick={() => setSign(s)}
-                className={cn(
-                  'flex-1 py-2 rounded-lg text-sm font-medium transition-all',
-                  sign === s
-                    ? 'bg-[rgba(var(--fg),0.08)] text-[rgba(var(--fg),0.85)]'
-                    : 'text-[rgba(var(--fg),0.40)]'
-                )}
-              >
+              <button key={s} onClick={() => setSign(s)}
+                className={cn('flex-1 py-2 rounded-lg text-sm font-medium transition-all',
+                  sign === s ? 'bg-[rgba(var(--fg),0.08)] text-[rgba(var(--fg),0.85)]' : 'text-[rgba(var(--fg),0.40)]')}>
                 {s === 'in' ? 'Inflow (+)' : 'Outflow (−)'}
               </button>
             ))}
           </div>
         </div>
-
         <div>
           <p className="section-label mb-2">Method</p>
           <div className="flex bg-[rgba(var(--fg),0.03)] border border-[rgba(var(--fg),0.06)] rounded-xl p-1 gap-1">
             {(['cash', 'digital'] as const).map(m => (
-              <button
-                key={m}
-                onClick={() => setMethod(m)}
-                className={cn(
-                  'flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize',
-                  method === m
-                    ? 'bg-[rgba(var(--fg),0.08)] text-[rgba(var(--fg),0.85)]'
-                    : 'text-[rgba(var(--fg),0.40)]'
-                )}
-              >
+              <button key={m} onClick={() => setMethod(m)}
+                className={cn('flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize',
+                  method === m ? 'bg-[rgba(var(--fg),0.08)] text-[rgba(var(--fg),0.85)]' : 'text-[rgba(var(--fg),0.40)]')}>
                 {m.charAt(0).toUpperCase() + m.slice(1)}
               </button>
             ))}
           </div>
         </div>
-
         <AmountField label="Amount" value={amount} onChange={setAmount} placeholder="0" />
-
         <div>
           <p className="section-label mb-2">Note (optional)</p>
-          <input
-            value={note}
-            onChange={e => setNote(e.target.value)}
+          <input value={note} onChange={e => setNote(e.target.value)}
             placeholder="e.g. ATM withdrawal, cash top-up"
-            className="w-full bg-[rgba(var(--fg),0.03)] border border-[rgba(var(--fg),0.06)] rounded-xl px-4 py-3 text-sm text-[rgba(var(--fg),0.82)] placeholder:text-[rgba(var(--fg),0.28)] outline-none focus:border-[rgba(var(--fg),0.15)] transition-colors"
-          />
+            className="w-full bg-[rgba(var(--fg),0.03)] border border-[rgba(var(--fg),0.06)] rounded-xl px-4 py-3 text-sm text-[rgba(var(--fg),0.82)] placeholder:text-[rgba(var(--fg),0.28)] outline-none focus:border-[rgba(var(--fg),0.15)] transition-colors" />
         </div>
       </div>
-
       <div className="px-6 pt-5 pb-8">
-        <button
-          onClick={handleAdd}
-          disabled={!amount || isNaN(parseFloat(amount))}
-          className="w-full py-3.5 rounded-xl bg-[rgba(var(--fg),0.9)] text-[var(--btn-primary-text)] text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-40"
-        >
+        <button onClick={handleAdd} disabled={!amount || isNaN(parseFloat(amount))}
+          className="w-full py-3.5 rounded-xl bg-[rgba(var(--fg),0.9)] text-[var(--btn-primary-text)] text-sm font-semibold active:scale-[0.98] transition-transform disabled:opacity-40">
           Add
         </button>
       </div>
@@ -632,16 +747,8 @@ function AddAdjustmentSheet({
   )
 }
 
-function AmountField({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  placeholder: string
+function AmountField({ label, value, onChange, placeholder }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder: string
 }) {
   return (
     <div>
@@ -649,10 +756,8 @@ function AmountField({
       <div className="flex items-center bg-[rgba(var(--fg),0.03)] border border-[rgba(var(--fg),0.06)] rounded-xl px-4 py-3 gap-2 focus-within:border-[rgba(var(--fg),0.15)] transition-colors">
         <span className="text-[rgba(var(--fg),0.38)] text-sm">Rs</span>
         <input
-          type="number"
-          inputMode="decimal"
-          value={value}
-          onChange={e => onChange(e.target.value)}
+          type="number" inputMode="decimal"
+          value={value} onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           className="flex-1 bg-transparent text-sm text-[rgba(var(--fg),0.82)] placeholder:text-[rgba(var(--fg),0.28)] outline-none tabular"
         />
