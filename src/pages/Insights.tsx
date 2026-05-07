@@ -381,7 +381,7 @@ export default function Insights() {
                       ))}
                     </Pie>
                   </PieChart>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none">
                     <span className="text-[rgba(var(--fg),0.82)] text-[11px] font-bold tabular leading-none">
                       {formatCurrency(total)}
                     </span>
