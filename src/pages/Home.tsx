@@ -163,6 +163,36 @@ export default function Home() {
           </div>
         )}
 
+        {/* This month: income − spent */}
+        {income > 0 ? (
+          (() => {
+            const remaining = income - total
+            const over = remaining < 0
+            return (
+              <div className="flex items-center justify-between px-6 py-3 border-b border-[rgba(var(--fg),0.05)]">
+                <span className="section-label">This month</span>
+                {over ? (
+                  <span className="text-[rgba(var(--rgb-warn),0.78)] text-xs tabular">
+                    {formatCurrency(Math.abs(remaining))} over income
+                  </span>
+                ) : (
+                  <span className="text-[rgba(var(--fg),0.70)] text-xs tabular">
+                    {formatCurrency(remaining)} left of {formatCurrency(income)}
+                  </span>
+                )}
+              </div>
+            )
+          })()
+        ) : (
+          <button
+            onClick={() => navigate('/settings')}
+            className="flex items-center justify-between px-6 py-3 border-b border-[rgba(var(--fg),0.05)] w-full active:bg-[rgba(var(--fg),0.02)] transition-colors"
+          >
+            <span className="section-label">This month</span>
+            <span className="text-[rgba(var(--fg),0.40)] text-xs">Set income in Settings →</span>
+          </button>
+        )}
+
         {/* Wallet remaining row */}
         {walletRecord && walletBalances && (
           <button
